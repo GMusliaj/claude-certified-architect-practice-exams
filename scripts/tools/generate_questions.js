@@ -112,7 +112,50 @@ Quality standards:
 - Three plausible distractors: each must be something an inexperienced developer might genuinely choose
 - Question stems may use HTML: <code> for inline code, <em> for emphasis — nothing else
 - All claims must be grounded in official Anthropic documentation
-- refs must link to real docs.anthropic.com URLs
+- refs must link to real, specific docs.anthropic.com URLs — never a top-level index page
+- Use the most specific sub-page available. Canonical URL map (use these exact URLs):
+
+  Tool use / tool_choice:
+    https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview
+    https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use   ← for tool_choice refs
+
+  Agentic systems / multi-agent:
+    https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems
+    https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts
+    https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/how-the-agent-loop-works
+
+  MCP:
+    https://docs.anthropic.com/en/docs/agents-and-tools/mcp
+
+  Prompt engineering / structured output:
+    https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview
+    https://docs.anthropic.com/en/docs/build-with-claude/structured-output
+
+  Batch API:
+    https://docs.anthropic.com/en/docs/build-with-claude/message-batches
+
+  Claude Code:
+    https://docs.anthropic.com/en/docs/claude-code/overview         ← general / plan mode / sessions
+    https://docs.anthropic.com/en/docs/claude-code/memory           ← CLAUDE.md, context, imports
+    https://docs.anthropic.com/en/docs/claude-code/hooks            ← PostToolUse / PreToolUse hooks
+    https://docs.anthropic.com/en/docs/claude-code/skills           ← skills / slash commands
+    https://docs.anthropic.com/en/docs/claude-code/settings         ← settings.json, MCP config
+    https://docs.anthropic.com/en/docs/claude-code/cli-reference    ← CLI flags (--print, --output-format)
+    https://docs.anthropic.com/en/docs/claude-code/github-actions   ← CI/CD pipelines
+
+  Context window:
+    https://docs.anthropic.com/en/docs/build-with-claude/context-windows
+
+  Message API:
+    https://docs.anthropic.com/en/api/messages
+
+- NEVER use these generic index URLs as a ref target:
+    https://docs.anthropic.com/en/docs/agents-and-tools             ← too broad
+    https://docs.anthropic.com/en/docs/build-with-claude/tool-use   ← too broad (use /overview)
+    https://docs.anthropic.com/en/docs/build-with-claude            ← too broad
+    https://docs.anthropic.com/en/docs/claude-code                  ← too broad (use a sub-page)
+    https://docs.anthropic.com/en/docs/build-with-claude/agentic    ← old path, use /agentic-systems
+
 - IMPORTANT: vary which option you place in "correct" — do NOT consistently put the answer in the same position. The system will shuffle options automatically, but you must still vary placement across questions.`,
 
     user: `Generate exactly ${count} new multiple-choice questions for the "${bank}" question bank.

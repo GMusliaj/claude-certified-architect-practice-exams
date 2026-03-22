@@ -16,7 +16,7 @@
     "refs": [
       {
         "label": "Multi-agent parallelism",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -37,7 +37,7 @@
     "refs": [
       {
         "label": "Multi-agent memory patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -58,11 +58,11 @@
     "refs": [
       {
         "label": "Tool use — tool_choice",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use"
       },
       {
         "label": "Agentic patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -83,11 +83,11 @@
     "refs": [
       {
         "label": "Claude Code workflows",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
       },
       {
         "label": "Agentic session patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -108,7 +108,7 @@
     "refs": [
       {
         "label": "Multi-agent synthesis patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -129,11 +129,11 @@
     "refs": [
       {
         "label": "Claude Code session patterns",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
       },
       {
         "label": "Agentic session management",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -154,7 +154,7 @@
     "refs": [
       {
         "label": "Coordinator design patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
       }
     ]
   },
@@ -175,7 +175,7 @@
     "refs": [
       {
         "label": "Multi-agent structured output",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       },
       {
         "label": "Prompt engineering",
@@ -204,7 +204,7 @@
       },
       {
         "label": "Cost optimization patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -225,7 +225,7 @@
     "refs": [
       {
         "label": "Agentic delegation patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -348,7 +348,7 @@
       },
       {
         "label": "Tool use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ],
     "options": [

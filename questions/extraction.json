@@ -20,7 +20,7 @@
       },
       {
         "label": "Tool use — JSON schemas",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -45,7 +45,7 @@
       },
       {
         "label": "Tool use schemas",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -87,7 +87,7 @@
     "refs": [
       {
         "label": "Agentic safety patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       },
       {
         "label": "Claude Code hooks",
@@ -112,7 +112,7 @@
     "refs": [
       {
         "label": "Agentic escalation patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       },
       {
         "label": "Prompt engineering",
@@ -137,7 +137,7 @@
     "refs": [
       {
         "label": "Agentic escalation patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -158,11 +158,11 @@
     "refs": [
       {
         "label": "Tool use error handling",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       },
       {
         "label": "Agentic reliability patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -229,7 +229,7 @@
     "refs": [
       {
         "label": "Tool use — JSON schemas",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       },
       {
         "label": "Structured output patterns",
@@ -251,7 +251,7 @@
       },
       {
         "label": "Tool Use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ],
     "options": [
@@ -439,7 +439,7 @@
     "refs": [
       {
         "label": "Tool Use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       },
       {
         "label": "Handling Stop Reasons",

@@ -37,7 +37,7 @@
     "refs": [
       {
         "label": "Multi-agent orchestration",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
       }
     ]
   },
@@ -58,7 +58,7 @@
     "refs": [
       {
         "label": "Defining agents with AgentDefinition",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -79,7 +79,7 @@
     "refs": [
       {
         "label": "Agentic workflows and task decomposition",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -100,7 +100,7 @@
     "refs": [
       {
         "label": "Session management and forking",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
       }
     ]
   },
@@ -121,7 +121,7 @@
     "refs": [
       {
         "label": "Building reliable agentic systems",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -142,7 +142,7 @@
     "refs": [
       {
         "label": "Context window management",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -163,7 +163,7 @@
     "refs": [
       {
         "label": "Agentic loop patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -184,7 +184,7 @@
     "refs": [
       {
         "label": "Multi-agent architecture",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -205,7 +205,7 @@
     "refs": [
       {
         "label": "Error handling in multi-agent systems",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -226,7 +226,7 @@
     "refs": [
       {
         "label": "Agent SDK hooks",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
       }
     ]
   },
@@ -247,7 +247,7 @@
     "refs": [
       {
         "label": "Prompt chaining and workflow design",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -268,7 +268,7 @@
     "refs": [
       {
         "label": "Parallel subagent execution",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
       }
     ]
   },
@@ -289,7 +289,7 @@
     "refs": [
       {
         "label": "AgentDefinition and allowedTools",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
       }
     ]
   },
@@ -310,7 +310,7 @@
     "refs": [
       {
         "label": "Coverage and error propagation",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -331,7 +331,7 @@
     "refs": [
       {
         "label": "Human-in-the-loop and hooks",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -352,7 +352,7 @@
     "refs": [
       {
         "label": "MCP tool error handling",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -373,7 +373,7 @@
     "refs": [
       {
         "label": "tool_choice parameter",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use"
       }
     ]
   },
@@ -436,7 +436,7 @@
     "refs": [
       {
         "label": "Claude Code built-in tools",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
       }
     ]
   },
@@ -457,7 +457,7 @@
     "refs": [
       {
         "label": "tool_choice and execution order",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use"
       }
     ]
   },
@@ -478,7 +478,7 @@
     "refs": [
       {
         "label": "Tool description best practices",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -520,7 +520,7 @@
     "refs": [
       {
         "label": "Tool design and security",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -562,7 +562,7 @@
     "refs": [
       {
         "label": "MCP error handling patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -583,7 +583,7 @@
     "refs": [
       {
         "label": "CLAUDE.md organization",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/memory"
       }
     ]
   },
@@ -604,7 +604,7 @@
     "refs": [
       {
         "label": "CLAUDE.md hierarchy",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/memory"
       }
     ]
   },
@@ -625,7 +625,7 @@
     "refs": [
       {
         "label": "Claude Code skills and SKILL.md",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/skills"
       }
     ]
   },
@@ -646,7 +646,7 @@
     "refs": [
       {
         "label": "Claude Code CLI flags",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/cli-reference"
       }
     ]
   },
@@ -667,7 +667,7 @@
     "refs": [
       {
         "label": "Custom slash commands",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/skills"
       }
     ]
   },
@@ -688,7 +688,7 @@
     "refs": [
       {
         "label": "Path-scoped rules in Claude Code",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
       }
     ]
   },
@@ -709,7 +709,7 @@
     "refs": [
       {
         "label": "Claude Code plan mode",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
       }
     ]
   },
@@ -730,7 +730,7 @@
     "refs": [
       {
         "label": "CLAUDE.md import depth",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/memory"
       }
     ]
   },
@@ -751,7 +751,7 @@
     "refs": [
       {
         "label": "Claude Code workflow",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
       }
     ]
   },
@@ -772,7 +772,7 @@
     "refs": [
       {
         "label": "Claude Code session management",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
       }
     ]
   },
@@ -793,7 +793,7 @@
     "refs": [
       {
         "label": "Claude Code skills frontmatter",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/skills"
       }
     ]
   },
@@ -814,7 +814,7 @@
     "refs": [
       {
         "label": "CI/CD with Claude Code",
-        "url": "https://docs.anthropic.com/en/docs/claude-code"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/github-actions"
       }
     ]
   },
@@ -856,7 +856,7 @@
     "refs": [
       {
         "label": "JSON schema for tool use",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -877,7 +877,7 @@
     "refs": [
       {
         "label": "Schema design for structured extraction",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -919,7 +919,7 @@
     "refs": [
       {
         "label": "Structured output design patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -940,7 +940,7 @@
     "refs": [
       {
         "label": "Structured output validation",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -1045,7 +1045,7 @@
     "refs": [
       {
         "label": "Validation and retry patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ]
   },
@@ -1066,7 +1066,7 @@
     "refs": [
       {
         "label": "tool_choice parameter",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use"
       }
     ]
   },
@@ -1087,7 +1087,7 @@
     "refs": [
       {
         "label": "Multi-agent research systems",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -1108,7 +1108,7 @@
     "refs": [
       {
         "label": "Reliability patterns in agentic systems",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -1129,7 +1129,7 @@
     "refs": [
       {
         "label": "Context management in long sessions",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -1150,7 +1150,7 @@
     "refs": [
       {
         "label": "Human-in-the-loop patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -1171,7 +1171,7 @@
     "refs": [
       {
         "label": "Escalation patterns",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -1213,7 +1213,7 @@
     "refs": [
       {
         "label": "Information provenance and reliability",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -1234,7 +1234,7 @@
     "refs": [
       {
         "label": "Session management and stale data",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
       }
     ]
   },
@@ -1255,7 +1255,7 @@
     "refs": [
       {
         "label": "Context management with subagents",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
       }
     ]
   },
@@ -1493,27 +1493,6 @@
       "Lazy tool registration — servers defer tool creation until the agent first invokes them"
     ],
     "answer": 2
-  },
-  {
-    "id": 72,
-    "domain": "Agentic Architecture & Orchestration",
-    "text": "In the MCP architecture, which component is responsible for enforcing security policies, handling user authorization decisions, and controlling cross-server interactions?",
-    "pattern": "Host as Security Policy Enforcer",
-    "explanation": "The MCP specification explicitly states the host process acts as the container and coordinator that enforces security policies, consent requirements, and controls cross-server interactions. Clients maintain isolated sessions but do not independently enforce security policy — the host does. There is no concept of a 'highest privilege server' or a dedicated authorization server in the MCP architecture.",
-    "background": "MCP follows a client-host-server architecture. The host creates and manages multiple clients, each with a 1:1 server relationship. The host is the security boundary enforcer — it controls permissions, user consent, and coordinates AI/LLM integration. Servers are intentionally isolated from each other and from the full conversation.",
-    "refs": [
-      {
-        "label": "MCP Architecture Specification",
-        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
-      }
-    ],
-    "options": [
-      "The host process",
-      "A dedicated MCP authorization server defined in the protocol",
-      "Each MCP client independently",
-      "The MCP server with the highest privilege level"
-    ],
-    "answer": 0
   },
   {
     "id": 73,
@@ -1843,7 +1822,7 @@
       },
       {
         "label": "Tool use — Claude docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
       }
     ],
     "options": [

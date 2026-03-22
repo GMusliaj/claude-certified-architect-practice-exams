@@ -23,8 +23,15 @@ export function buildExam(bank, selection) {
     byDomain[q.domain].push(q)
   }
   const selected = []
+  const seenIds = new Set()
   for (const [domain, count] of Object.entries(selection)) {
-    selected.push(...shuffle(byDomain[domain] || []).slice(0, count))
+    let taken = 0
+    for (const q of shuffle(byDomain[domain] || [])) {
+      if (seenIds.has(q.id)) continue
+      seenIds.add(q.id)
+      selected.push(q)
+      if (++taken >= count) break
+    }
   }
   return shuffle(selected).map(shuffleOptions)
 }

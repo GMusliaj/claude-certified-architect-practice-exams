@@ -69,8 +69,9 @@ async function main() {
 
   log(`loaded ${questions.length} questions`);
 
-  const errors  = [];
-  const seenIds = new Set();
+  const errors    = [];
+  const seenIds   = new Set();
+  const seenStems = new Map(); // stem → first question label
 
   questions.forEach((q, i) => {
     const label = `Q${i + 1} (id:${q.id ?? '?'})`;
@@ -84,6 +85,16 @@ async function main() {
     if (q.id !== undefined) {
       if (seenIds.has(q.id)) errors.push(`${label}: duplicate id ${q.id}`);
       else seenIds.add(q.id);
+    }
+
+    // Duplicate question-stem detection (first 80 chars, case-insensitive, HTML stripped)
+    if (q.text) {
+      const stem = q.text.replace(/<[^>]+>/g, '').trim().slice(0, 80).toLowerCase();
+      if (seenStems.has(stem)) {
+        errors.push(`${label}: duplicate question stem (same as ${seenStems.get(stem)})`);
+      } else {
+        seenStems.set(stem, label);
+      }
     }
 
     if (!Array.isArray(q.options) || q.options.length !== 4) {
