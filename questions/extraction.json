@@ -16,11 +16,11 @@
     "refs": [
       {
         "label": "Structured output patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       },
       {
         "label": "Tool use — JSON schemas",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -41,11 +41,11 @@
     "refs": [
       {
         "label": "Structured output",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       },
       {
         "label": "Tool use schemas",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -66,7 +66,7 @@
     "refs": [
       {
         "label": "Prompt engineering — few-shot",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -87,11 +87,11 @@
     "refs": [
       {
         "label": "Agentic safety patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       },
       {
         "label": "Claude Code hooks",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/hooks"
+        "url": "https://code.claude.com/docs/en/hooks"
       }
     ]
   },
@@ -112,11 +112,11 @@
     "refs": [
       {
         "label": "Agentic escalation patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       },
       {
         "label": "Prompt engineering",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -137,7 +137,7 @@
     "refs": [
       {
         "label": "Agentic escalation patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -158,11 +158,11 @@
     "refs": [
       {
         "label": "Tool use error handling",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "Agentic reliability patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -183,7 +183,7 @@
     "refs": [
       {
         "label": "Prompt engineering & evaluation",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -204,11 +204,11 @@
     "refs": [
       {
         "label": "Long context best practices",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/long-context"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       },
       {
         "label": "Prompt engineering",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -229,11 +229,11 @@
     "refs": [
       {
         "label": "Tool use — JSON schemas",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "Structured output patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -247,11 +247,11 @@
     "refs": [
       {
         "label": "Structured Outputs — Claude API Docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       },
       {
         "label": "Tool Use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -272,11 +272,11 @@
     "refs": [
       {
         "label": "Structured Outputs — Claude API Docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       },
       {
         "label": "Strengthen Guardrails",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/strengthen-guardrails"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview"
       }
     ],
     "options": [
@@ -297,7 +297,7 @@
     "refs": [
       {
         "label": "Structured Outputs — Claude API Docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       }
     ],
     "options": [
@@ -322,7 +322,7 @@
       },
       {
         "label": "Strengthen Guardrails",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/strengthen-guardrails"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview"
       }
     ],
     "options": [
@@ -343,7 +343,7 @@
     "refs": [
       {
         "label": "Structured Outputs — Claude API Docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       }
     ],
     "options": [
@@ -364,11 +364,11 @@
     "refs": [
       {
         "label": "Handling Stop Reasons",
-        "url": "https://docs.anthropic.com/en/api/handling-stop-reasons"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons"
       },
       {
         "label": "Structured Outputs — Claude API Docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       }
     ],
     "options": [
@@ -389,11 +389,11 @@
     "refs": [
       {
         "label": "Context Windows",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       },
       {
         "label": "Structured Outputs — Claude API Docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       }
     ],
     "options": [
@@ -414,11 +414,11 @@
     "refs": [
       {
         "label": "Strengthen Guardrails",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/strengthen-guardrails"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview"
       },
       {
         "label": "Reduce Hallucinations",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/reduce-hallucinations"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview"
       }
     ],
     "options": [
@@ -439,11 +439,11 @@
     "refs": [
       {
         "label": "Tool Use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "Handling Stop Reasons",
-        "url": "https://docs.anthropic.com/en/api/handling-stop-reasons"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons"
       }
     ],
     "options": [
@@ -464,11 +464,11 @@
     "refs": [
       {
         "label": "Citations — Claude API Docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/citations"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/citations"
       },
       {
         "label": "Reduce Hallucinations",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/reduce-hallucinations"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview"
       }
     ],
     "options": [

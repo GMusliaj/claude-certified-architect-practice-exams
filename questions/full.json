@@ -16,7 +16,7 @@
     "refs": [
       {
         "label": "Messages API stop_reason",
-        "url": "https://docs.anthropic.com/en/api/messages"
+        "url": "https://platform.claude.com/docs/en/api/messages"
       }
     ]
   },
@@ -37,7 +37,7 @@
     "refs": [
       {
         "label": "Multi-agent orchestration",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -58,7 +58,7 @@
     "refs": [
       {
         "label": "Defining agents with AgentDefinition",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -79,7 +79,7 @@
     "refs": [
       {
         "label": "Agentic workflows and task decomposition",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -100,7 +100,7 @@
     "refs": [
       {
         "label": "Session management and forking",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       }
     ]
   },
@@ -121,7 +121,7 @@
     "refs": [
       {
         "label": "Building reliable agentic systems",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -142,7 +142,7 @@
     "refs": [
       {
         "label": "Context window management",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -163,7 +163,7 @@
     "refs": [
       {
         "label": "Agentic loop patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -184,7 +184,7 @@
     "refs": [
       {
         "label": "Multi-agent architecture",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -205,7 +205,7 @@
     "refs": [
       {
         "label": "Error handling in multi-agent systems",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -226,7 +226,7 @@
     "refs": [
       {
         "label": "Agent SDK hooks",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -247,7 +247,7 @@
     "refs": [
       {
         "label": "Prompt chaining and workflow design",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -268,7 +268,7 @@
     "refs": [
       {
         "label": "Parallel subagent execution",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -289,7 +289,7 @@
     "refs": [
       {
         "label": "AgentDefinition and allowedTools",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -310,7 +310,7 @@
     "refs": [
       {
         "label": "Coverage and error propagation",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -331,7 +331,7 @@
     "refs": [
       {
         "label": "Human-in-the-loop and hooks",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -352,7 +352,7 @@
     "refs": [
       {
         "label": "MCP tool error handling",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -373,7 +373,7 @@
     "refs": [
       {
         "label": "tool_choice parameter",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -436,7 +436,7 @@
     "refs": [
       {
         "label": "Claude Code built-in tools",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       }
     ]
   },
@@ -457,7 +457,7 @@
     "refs": [
       {
         "label": "tool_choice and execution order",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -478,7 +478,7 @@
     "refs": [
       {
         "label": "Tool description best practices",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -520,7 +520,7 @@
     "refs": [
       {
         "label": "Tool design and security",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -562,7 +562,7 @@
     "refs": [
       {
         "label": "MCP error handling patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -583,7 +583,7 @@
     "refs": [
       {
         "label": "CLAUDE.md organization",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/memory"
+        "url": "https://code.claude.com/docs/en/memory"
       }
     ]
   },
@@ -604,7 +604,7 @@
     "refs": [
       {
         "label": "CLAUDE.md hierarchy",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/memory"
+        "url": "https://code.claude.com/docs/en/memory"
       }
     ]
   },
@@ -625,7 +625,7 @@
     "refs": [
       {
         "label": "Claude Code skills and SKILL.md",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/skills"
+        "url": "https://code.claude.com/docs/en/skills"
       }
     ]
   },
@@ -646,7 +646,7 @@
     "refs": [
       {
         "label": "Claude Code CLI flags",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/cli-reference"
+        "url": "https://code.claude.com/docs/en/cli-reference"
       }
     ]
   },
@@ -667,7 +667,7 @@
     "refs": [
       {
         "label": "Custom slash commands",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/skills"
+        "url": "https://code.claude.com/docs/en/skills"
       }
     ]
   },
@@ -688,7 +688,7 @@
     "refs": [
       {
         "label": "Path-scoped rules in Claude Code",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       }
     ]
   },
@@ -709,7 +709,7 @@
     "refs": [
       {
         "label": "Claude Code plan mode",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       }
     ]
   },
@@ -730,7 +730,7 @@
     "refs": [
       {
         "label": "CLAUDE.md import depth",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/memory"
+        "url": "https://code.claude.com/docs/en/memory"
       }
     ]
   },
@@ -751,7 +751,7 @@
     "refs": [
       {
         "label": "Claude Code workflow",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       }
     ]
   },
@@ -772,7 +772,7 @@
     "refs": [
       {
         "label": "Claude Code session management",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       }
     ]
   },
@@ -793,7 +793,7 @@
     "refs": [
       {
         "label": "Claude Code skills frontmatter",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/skills"
+        "url": "https://code.claude.com/docs/en/skills"
       }
     ]
   },
@@ -814,7 +814,7 @@
     "refs": [
       {
         "label": "CI/CD with Claude Code",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/github-actions"
+        "url": "https://code.claude.com/docs/en/github-actions"
       }
     ]
   },
@@ -835,7 +835,7 @@
     "refs": [
       {
         "label": "Few-shot prompting techniques",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -856,7 +856,7 @@
     "refs": [
       {
         "label": "JSON schema for tool use",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -877,7 +877,7 @@
     "refs": [
       {
         "label": "Schema design for structured extraction",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -898,7 +898,7 @@
     "refs": [
       {
         "label": "Message Batches API",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/batch-api"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/batch-processing"
       }
     ]
   },
@@ -919,7 +919,7 @@
     "refs": [
       {
         "label": "Structured output design patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -940,7 +940,7 @@
     "refs": [
       {
         "label": "Structured output validation",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -961,7 +961,7 @@
     "refs": [
       {
         "label": "Prompt engineering with examples",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -982,7 +982,7 @@
     "refs": [
       {
         "label": "Multi-instance review patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -1003,7 +1003,7 @@
     "refs": [
       {
         "label": "Explicit criteria in prompts",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -1024,7 +1024,7 @@
     "refs": [
       {
         "label": "Message Batches API",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/batch-api"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/batch-processing"
       }
     ]
   },
@@ -1045,7 +1045,7 @@
     "refs": [
       {
         "label": "Validation and retry patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -1066,7 +1066,7 @@
     "refs": [
       {
         "label": "tool_choice parameter",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -1087,7 +1087,7 @@
     "refs": [
       {
         "label": "Multi-agent research systems",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -1108,7 +1108,7 @@
     "refs": [
       {
         "label": "Reliability patterns in agentic systems",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -1129,7 +1129,7 @@
     "refs": [
       {
         "label": "Context management in long sessions",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -1150,7 +1150,7 @@
     "refs": [
       {
         "label": "Human-in-the-loop patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -1171,7 +1171,7 @@
     "refs": [
       {
         "label": "Escalation patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -1192,7 +1192,7 @@
     "refs": [
       {
         "label": "Context window management",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -1213,7 +1213,7 @@
     "refs": [
       {
         "label": "Information provenance and reliability",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -1234,7 +1234,7 @@
     "refs": [
       {
         "label": "Session management and stale data",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -1255,7 +1255,7 @@
     "refs": [
       {
         "label": "Context management with subagents",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -1676,7 +1676,7 @@
     "refs": [
       {
         "label": "Claude Agent SDK — Core Concepts",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ],
     "options": [
@@ -1722,7 +1722,7 @@
     "refs": [
       {
         "label": "Claude Code — CLAUDE.md Configuration",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/claude-code"
+        "url": "https://code.claude.com"
       }
     ],
     "options": [
@@ -1743,11 +1743,11 @@
     "refs": [
       {
         "label": "Reduce hallucinations — Claude docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/reduce-hallucinations"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview"
       },
       {
         "label": "Structured outputs — Claude docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       }
     ],
     "options": [
@@ -1768,11 +1768,11 @@
     "refs": [
       {
         "label": "Context windows — Claude docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       },
       {
         "label": "Compaction — Claude docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows#compaction"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       }
     ],
     "options": [
@@ -1818,11 +1818,11 @@
     "refs": [
       {
         "label": "How the agent loop works",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/how-the-agent-loop-works"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/agent-loop"
       },
       {
         "label": "Tool use — Claude docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -1843,7 +1843,7 @@
     "refs": [
       {
         "label": "Structured outputs — Claude docs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       }
     ],
     "options": [
@@ -1864,7 +1864,7 @@
     "refs": [
       {
         "label": "Claude Code — CI/CD Integration",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/claude-code"
+        "url": "https://code.claude.com"
       }
     ],
     "options": [

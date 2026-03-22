@@ -1,15 +1,12 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { loadHistory, clearHistory } from '../lib/storage'
 import exams from '../data/exams.json'
-import { fmtTime } from '../lib/format'
+import { fmtTime, fmtDate } from '../lib/format'
 import ThemeToggle from '../components/ThemeToggle'
 
-function fmtDate(iso) {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
-
 export default function History() {
+  const navigate              = useNavigate()
   const [filter, setFilter]   = useState('all')
   const [history, setHistory] = useState(loadHistory)
 
@@ -123,6 +120,13 @@ export default function History() {
                   <div className="attempt-time" style={{ '--accent': accent }}>
                     {fmtTime(attempt.elapsed)}
                   </div>
+
+                  <button
+                    className="btn btn-ghost attempt-review-btn"
+                    onClick={() => navigate(`/review/${attempt.id}`)}
+                  >
+                    Review
+                  </button>
                 </div>
               )
             })}

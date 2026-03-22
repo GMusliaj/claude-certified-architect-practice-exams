@@ -16,11 +16,11 @@
     "refs": [
       {
         "label": "Agentic loop & stop_reason",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       },
       {
         "label": "Messages API response object",
-        "url": "https://docs.anthropic.com/en/api/messages"
+        "url": "https://platform.claude.com/docs/en/api/messages"
       }
     ]
   },
@@ -41,11 +41,11 @@
     "refs": [
       {
         "label": "Multi-agent orchestration",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       },
       {
         "label": "Building effective agents",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -66,11 +66,11 @@
     "refs": [
       {
         "label": "Tool use — tool_choice",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "Claude Code hooks (PreToolUse)",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/hooks"
+        "url": "https://code.claude.com/docs/en/hooks"
       }
     ]
   },
@@ -91,11 +91,11 @@
     "refs": [
       {
         "label": "Tool use error handling",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "Agentic patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -116,11 +116,11 @@
     "refs": [
       {
         "label": "Multi-agent systems overview",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       },
       {
         "label": "Claude Agent SDK — Task tool",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -141,7 +141,7 @@
     "refs": [
       {
         "label": "Agentic systems design",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -162,11 +162,11 @@
     "refs": [
       {
         "label": "Claude Code hooks",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/hooks"
+        "url": "https://code.claude.com/docs/en/hooks"
       },
       {
         "label": "Claude Code settings",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ]
   },
@@ -187,11 +187,11 @@
     "refs": [
       {
         "label": "Tool use best practices",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "Multi-agent design",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -212,7 +212,7 @@
     "refs": [
       {
         "label": "Tool use — writing descriptions",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "MCP tool design",
@@ -237,7 +237,7 @@
     "refs": [
       {
         "label": "Tool use — designing tools",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "MCP tool concepts",
@@ -262,7 +262,7 @@
     "refs": [
       {
         "label": "Tool results & error handling",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -283,7 +283,7 @@
     "refs": [
       {
         "label": "MCP in Claude Code",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/mcp"
+        "url": "https://code.claude.com/docs/en/mcp"
       },
       {
         "label": "Model Context Protocol",
@@ -308,11 +308,11 @@
     "refs": [
       {
         "label": "Tool use best practices",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "Multi-agent specialization",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -333,11 +333,11 @@
     "refs": [
       {
         "label": "CLAUDE.md memory system",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/memory"
+        "url": "https://code.claude.com/docs/en/memory"
       },
       {
         "label": "Claude Code configuration",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ]
   },
@@ -358,11 +358,11 @@
     "refs": [
       {
         "label": "Claude Code memory & rules",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/memory"
+        "url": "https://code.claude.com/docs/en/memory"
       },
       {
         "label": "Claude Code settings",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ]
   },
@@ -383,11 +383,11 @@
     "refs": [
       {
         "label": "Claude Code skills",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/skills"
+        "url": "https://code.claude.com/docs/en/skills"
       },
       {
         "label": "Claude Code configuration",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ]
   },
@@ -408,11 +408,11 @@
     "refs": [
       {
         "label": "Claude Code CLI reference",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/cli-reference"
+        "url": "https://code.claude.com/docs/en/cli-reference"
       },
       {
         "label": "Claude Code in CI/CD",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/github-actions"
+        "url": "https://code.claude.com/docs/en/github-actions"
       }
     ]
   },
@@ -433,11 +433,11 @@
     "refs": [
       {
         "label": "Claude Code — Plan Mode",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       },
       {
         "label": "Claude Code overview",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       }
     ]
   },
@@ -458,11 +458,11 @@
     "refs": [
       {
         "label": "Claude Code in CI/CD",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/github-actions"
+        "url": "https://code.claude.com/docs/en/github-actions"
       },
       {
         "label": "Claude Code overview",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       }
     ]
   },
@@ -483,7 +483,7 @@
     "refs": [
       {
         "label": "Prompt engineering guide",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -504,11 +504,11 @@
     "refs": [
       {
         "label": "Tool use — JSON schemas",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "Structured output patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -529,11 +529,11 @@
     "refs": [
       {
         "label": "Prompt engineering & validation",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       },
       {
         "label": "Tool use error handling",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -554,11 +554,11 @@
     "refs": [
       {
         "label": "Message Batches API",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/message-batches"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/batch-processing"
       },
       {
         "label": "Batches API reference",
-        "url": "https://docs.anthropic.com/en/api/creating-message-batches"
+        "url": "https://platform.claude.com/docs/en/api/messages/batches/create"
       }
     ]
   },
@@ -579,11 +579,11 @@
     "refs": [
       {
         "label": "Multi-agent systems",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       },
       {
         "label": "Structured output design",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -604,11 +604,11 @@
     "refs": [
       {
         "label": "Claude Code for code review",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       },
       {
         "label": "Prompt engineering",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -629,11 +629,11 @@
     "refs": [
       {
         "label": "Long context best practices",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/long-context"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       },
       {
         "label": "Agentic patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -654,11 +654,11 @@
     "refs": [
       {
         "label": "Agentic patterns & session management",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       },
       {
         "label": "Tool use — conversation format",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ]
   },
@@ -679,11 +679,11 @@
     "refs": [
       {
         "label": "Long context strategies",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/long-context"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       },
       {
         "label": "Agentic memory patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -704,11 +704,11 @@
     "refs": [
       {
         "label": "Claude Code hooks (PostToolUse)",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/hooks"
+        "url": "https://code.claude.com/docs/en/hooks"
       },
       {
         "label": "Long context management",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/long-context"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       }
     ]
   },
@@ -729,11 +729,11 @@
     "refs": [
       {
         "label": "Prompt engineering & evaluation",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       },
       {
         "label": "Building reliable pipelines",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -1020,7 +1020,7 @@
     "refs": [
       {
         "label": "Structured outputs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       }
     ],
     "options": [
@@ -1062,7 +1062,7 @@
     "refs": [
       {
         "label": "Context windows and compaction",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       }
     ],
     "options": [
@@ -1083,7 +1083,7 @@
     "refs": [
       {
         "label": "Claude Code Configuration",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ],
     "options": [
@@ -1146,7 +1146,7 @@
     "refs": [
       {
         "label": "Tool use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -1209,7 +1209,7 @@
     "refs": [
       {
         "label": "Structured outputs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-output"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       }
     ],
     "options": [
@@ -1230,7 +1230,7 @@
     "refs": [
       {
         "label": "Claude Code Configuration",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ],
     "options": [
@@ -1272,7 +1272,7 @@
     "refs": [
       {
         "label": "Tool use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -1419,7 +1419,7 @@
     "refs": [
       {
         "label": "Tool use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -1440,7 +1440,7 @@
     "refs": [
       {
         "label": "Claude Code Configuration",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ],
     "options": [
@@ -1524,7 +1524,7 @@
     "refs": [
       {
         "label": "Prompting best practices",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ],
     "options": [
@@ -1566,7 +1566,7 @@
     "refs": [
       {
         "label": "Claude Code documentation",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       }
     ],
     "options": [
@@ -1650,7 +1650,7 @@
     "refs": [
       {
         "label": "Structured outputs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       }
     ],
     "options": [
@@ -1671,7 +1671,7 @@
     "refs": [
       {
         "label": "Context windows & compaction",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       }
     ],
     "options": [
@@ -1713,7 +1713,7 @@
     "refs": [
       {
         "label": "Claude Code configuration",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ],
     "options": [
@@ -1734,7 +1734,7 @@
     "refs": [
       {
         "label": "Agent SDK core concepts",
-        "url": "https://docs.anthropic.com/en/docs/agents/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ],
     "options": [
@@ -1755,7 +1755,7 @@
     "refs": [
       {
         "label": "Tool use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -1797,7 +1797,7 @@
     "refs": [
       {
         "label": "Context windows",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       }
     ],
     "options": [
@@ -1818,7 +1818,7 @@
     "refs": [
       {
         "label": "Claude Code hooks",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/hooks"
+        "url": "https://code.claude.com/docs/en/hooks"
       }
     ],
     "options": [
@@ -1839,7 +1839,7 @@
     "refs": [
       {
         "label": "Agent SDK concepts",
-        "url": "https://docs.anthropic.com/en/docs/agents/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ],
     "options": [
@@ -1881,7 +1881,7 @@
     "refs": [
       {
         "label": "Structured outputs",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
       }
     ],
     "options": [
@@ -1902,7 +1902,7 @@
     "refs": [
       {
         "label": "Claude Agent SDK — How the agent loop works",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/how-the-agent-loop-works"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/agent-loop"
       }
     ],
     "options": [
@@ -1944,7 +1944,7 @@
     "refs": [
       {
         "label": "Tool use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -1965,7 +1965,7 @@
     "refs": [
       {
         "label": "Context windows — Compaction",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows#compaction"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       }
     ],
     "options": [
@@ -2007,7 +2007,7 @@
     "refs": [
       {
         "label": "Claude Code — CLAUDE.md",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/memory"
+        "url": "https://code.claude.com/docs/en/memory"
       }
     ],
     "options": [
@@ -2028,7 +2028,7 @@
     "refs": [
       {
         "label": "Handling stop reasons",
-        "url": "https://docs.anthropic.com/en/api/handling-stop-reasons"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons"
       }
     ],
     "options": [
@@ -2070,7 +2070,7 @@
     "refs": [
       {
         "label": "Batch processing",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/batch-processing"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/batch-processing"
       }
     ],
     "options": [
@@ -2091,7 +2091,7 @@
     "refs": [
       {
         "label": "Claude Code — Hooks",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/hooks"
+        "url": "https://code.claude.com/docs/en/hooks"
       }
     ],
     "options": [
@@ -2133,7 +2133,7 @@
     "refs": [
       {
         "label": "Handling stop reasons",
-        "url": "https://docs.anthropic.com/en/api/handling-stop-reasons"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons"
       }
     ],
     "options": [
@@ -2154,7 +2154,7 @@
     "refs": [
       {
         "label": "Prompting best practices",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompting-best-practices"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ],
     "options": [
@@ -2196,7 +2196,7 @@
     "refs": [
       {
         "label": "Handling stop reasons",
-        "url": "https://docs.anthropic.com/en/api/handling-stop-reasons"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons"
       }
     ],
     "options": [
@@ -2238,7 +2238,7 @@
     "refs": [
       {
         "label": "Tool use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -2259,7 +2259,7 @@
     "refs": [
       {
         "label": "Context windows",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       }
     ],
     "options": [
@@ -2301,7 +2301,7 @@
     "refs": [
       {
         "label": "Claude Code documentation",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       }
     ],
     "options": [
@@ -2322,7 +2322,7 @@
     "refs": [
       {
         "label": "Building effective agents",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ],
     "options": [
@@ -2343,7 +2343,7 @@
     "refs": [
       {
         "label": "Tool use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -2364,7 +2364,7 @@
     "refs": [
       {
         "label": "Context windows – Compaction",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows#compaction"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       }
     ],
     "options": [
@@ -2448,7 +2448,7 @@
     "refs": [
       {
         "label": "Context windows",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       }
     ],
     "options": [
@@ -2490,7 +2490,7 @@
     "refs": [
       {
         "label": "Anthropic — Building Effective Agents",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ],
     "options": [
@@ -2511,7 +2511,7 @@
     "refs": [
       {
         "label": "Anthropic — Prompt Engineering Best Practices",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ],
     "options": [
@@ -2553,7 +2553,7 @@
     "refs": [
       {
         "label": "Claude Code — CLAUDE.md Configuration",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ],
     "options": [
@@ -2574,7 +2574,7 @@
     "refs": [
       {
         "label": "Anthropic — Tool Use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -2616,7 +2616,7 @@
     "refs": [
       {
         "label": "Anthropic — Context Windows and Compaction",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/context-windows"
       }
     ],
     "options": [
@@ -2637,7 +2637,7 @@
     "refs": [
       {
         "label": "Anthropic — Handling Stop Reasons",
-        "url": "https://docs.anthropic.com/en/api/handling-stop-reasons"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons"
       }
     ],
     "options": [
@@ -2679,7 +2679,7 @@
     "refs": [
       {
         "label": "Hooks reference — PostToolUse",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/hooks"
+        "url": "https://code.claude.com/docs/en/hooks"
       }
     ],
     "options": [
@@ -2700,7 +2700,7 @@
     "refs": [
       {
         "label": "Multi-agent orchestration",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ],
     "options": [
@@ -2721,7 +2721,7 @@
     "refs": [
       {
         "label": "MCP Resources",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools/model-context-protocol"
+        "url": "https://modelcontextprotocol.io/docs/getting-started/intro"
       }
     ],
     "options": [
@@ -2742,7 +2742,7 @@
     "refs": [
       {
         "label": "Tool use — forcing structured output",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use#forcing-tool-use"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -2763,7 +2763,7 @@
     "refs": [
       {
         "label": "Long context tips",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/long-context-tips"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#long-context-prompting"
       }
     ],
     "options": [
@@ -2784,7 +2784,7 @@
     "refs": [
       {
         "label": "Hooks reference — Exit code 2",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/hooks"
+        "url": "https://code.claude.com/docs/en/hooks"
       }
     ],
     "options": [
@@ -2805,7 +2805,7 @@
     "refs": [
       {
         "label": "Agentic loop patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ],
     "options": [
@@ -2826,7 +2826,7 @@
     "refs": [
       {
         "label": "MCP Elicitation",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools/model-context-protocol"
+        "url": "https://modelcontextprotocol.io/docs/getting-started/intro"
       }
     ],
     "options": [
@@ -2847,7 +2847,7 @@
     "refs": [
       {
         "label": "Structured output best practices",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview"
       }
     ],
     "options": [
@@ -2868,7 +2868,7 @@
     "refs": [
       {
         "label": "Hooks reference — PreCompact",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/hooks"
+        "url": "https://code.claude.com/docs/en/hooks"
       }
     ],
     "options": [
@@ -2889,7 +2889,7 @@
     "refs": [
       {
         "label": "Claude Code Settings — Configuration Scopes",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ],
     "options": [
@@ -2910,7 +2910,7 @@
     "refs": [
       {
         "label": "Tool Use — Forcing tool use",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [
@@ -2931,7 +2931,7 @@
     "refs": [
       {
         "label": "Long Context Tips",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/long-context-tips"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#long-context-prompting"
       }
     ],
     "options": [
@@ -2952,7 +2952,7 @@
     "refs": [
       {
         "label": "MCP Specification — Architecture",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools/mcp"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/mcp"
       }
     ],
     "options": [
@@ -2973,7 +2973,7 @@
     "refs": [
       {
         "label": "Building Effective Agents",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ],
     "options": [
@@ -2994,7 +2994,7 @@
     "refs": [
       {
         "label": "Claude Code Settings — When to Use Each Scope",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/settings"
+        "url": "https://code.claude.com/docs/en/settings"
       }
     ],
     "options": [
@@ -3015,7 +3015,7 @@
     "refs": [
       {
         "label": "Prompt Engineering — Structured Output",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview"
       }
     ],
     "options": [
@@ -3036,7 +3036,7 @@
     "refs": [
       {
         "label": "Building Effective Agents — Tool Selection",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ],
     "options": [
@@ -3057,7 +3057,7 @@
     "refs": [
       {
         "label": "Building Effective Agents",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ],
     "options": [
@@ -3078,7 +3078,7 @@
     "refs": [
       {
         "label": "MCP Core Architecture — Primitives",
-        "url": "https://docs.anthropic.com/en/docs/agents-and-tools/mcp"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/mcp"
       }
     ],
     "options": [

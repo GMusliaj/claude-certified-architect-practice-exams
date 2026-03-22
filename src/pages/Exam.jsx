@@ -3,10 +3,8 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import exams from '../data/exams.json'
 import { loadQuestions } from '../lib/loadQuestions'
 import { buildExam, buildDrillExam } from '../lib/buildExam'
-import { saveProgress, loadProgress, clearProgress, saveResult } from '../lib/storage'
-import { fmtTime, calcDomainScores, getExamTotal } from '../lib/format'
-
-const OPT_LABEL = ['A', 'B', 'C', 'D']
+import { saveProgress, loadProgress, clearProgress, saveResult, saveSnapshot, loadSnapshot } from '../lib/storage'
+import { fmtTime, calcDomainScores, getExamTotal, getWeakDomains, OPT_LABEL } from '../lib/format'
 
 // Always-current ref — avoids stale closures in intervals/effects
 function useLatest(value) {
@@ -16,8 +14,9 @@ function useLatest(value) {
 }
 
 // ── Start Screen ──────────────────────────────────────────────────────────────
-function StartScreen({ exam, savedState, drillDomains, onStart, onResume }) {
-  const [study, setStudy] = useState(false)
+function StartScreen({ exam, savedState, drillDomains, onStart, onResume, onAbandon }) {
+  // Pre-select the mode that was active when the session was saved
+  const [study, setStudy] = useState(() => savedState?.studyMode ?? false)
   const total = drillDomains ? 10 : getExamTotal(exam.selection)
   return (
     <div className="start-screen">
@@ -68,11 +67,12 @@ function StartScreen({ exam, savedState, drillDomains, onStart, onResume }) {
           </>
         )}
 
-        {!drillDomains && !study && savedState && (
+        {!drillDomains && savedState && study === (savedState.studyMode ?? false) && (
           <div className="resume-bar">
             <span className="resume-bar-text">
               In progress · Q{savedState.current + 1}/{total} · {savedState.answers.filter(Boolean).length} answered · {fmtTime(savedState.elapsed)} elapsed
             </span>
+            <button className="btn btn-danger" onClick={onAbandon}>Abandon</button>
             <button className="btn btn-ghost" onClick={onResume}>Resume</button>
           </div>
         )}
@@ -89,7 +89,7 @@ function StartScreen({ exam, savedState, drillDomains, onStart, onResume }) {
 }
 
 // ── Question Screen ───────────────────────────────────────────────────────────
-function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode, paused, onSelect, onNext, onBack, onPause, onUnpause }) {
+function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode, paused, onSelect, onNext, onBack, onPause, onUnpause, onAbandon }) {
   const q        = questions[current]
   const answer   = answers[current]
   const answered = answer !== undefined
@@ -101,18 +101,17 @@ function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode,
 
   useEffect(() => { setPending(null) }, [current])
 
-  // Keyboard navigation — lives here so it can read/set pending
+  // Keyboard navigation
   useEffect(() => {
     if (paused) return
     function onKey(e) {
       const tag = e.target.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
       if (!answered) {
-        if (e.key === '1') setPending(0)
-        else if (e.key === '2') setPending(1)
-        else if (e.key === '3') setPending(2)
-        else if (e.key === '4') setPending(3)
-        else if ((e.key === 'Enter' || e.key === ' ') && pendingRef.current !== null) {
+        const keyMap = { '1': 0, '2': 1, '3': 2, '4': 3 }
+        if (e.key in keyMap) {
+          studyMode ? setPending(keyMap[e.key]) : onSelect(keyMap[e.key])
+        } else if ((e.key === 'Enter' || e.key === ' ') && studyMode && pendingRef.current !== null) {
           e.preventDefault()
           onSelect(pendingRef.current)
         }
@@ -127,12 +126,17 @@ function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode,
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [paused, current, answered])
+  }, [paused, current, answered, studyMode])
 
   function optClass(i) {
     if (answered) {
-      if (i === q.answer)      return 'option correct'
-      if (i === answer.selected) return 'option wrong'
+      if (studyMode) {
+        if (i === q.answer)        return 'option correct'
+        if (i === answer.selected) return 'option wrong'
+        return 'option disabled'
+      }
+      // Exam mode: only show which option was chosen, no correct/wrong reveal
+      if (i === answer.selected) return 'option exam-chosen'
       return 'option disabled'
     }
     if (i === pending) return 'option pending'
@@ -167,6 +171,7 @@ function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode,
             <h2 className="pause-title">Exam Paused</h2>
             <p className="pause-sub">Your progress is saved. The timer is stopped.</p>
             <button className="btn btn-primary" onClick={onUnpause}>Resume Exam</button>
+            <button className="btn btn-danger" onClick={onAbandon}>Abandon &amp; Start Fresh</button>
           </div>
         ) : (<>
         <div className="card">
@@ -178,14 +183,19 @@ function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode,
 
           <div className="options">
             {q.options.map((opt, i) => (
-              <button key={i} className={optClass(i)} onClick={() => setPending(i)}>
+              <button
+                key={i}
+                className={optClass(i)}
+                onClick={() => studyMode ? setPending(i) : onSelect(i)}
+                disabled={answered}
+              >
                 <span className="option-key">{OPT_LABEL[i]}</span>
                 <span className="option-text" dangerouslySetInnerHTML={{ __html: opt }} />
               </button>
             ))}
           </div>
 
-          {answered && (
+          {answered && studyMode && (
             <div className="explanation">
               <p dangerouslySetInnerHTML={{ __html: q.explanation }} />
               <div className="pattern-tag">Pattern: {q.pattern}</div>
@@ -212,7 +222,7 @@ function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode,
           {!studyMode && (
             <button className="btn btn-ghost btn-pause-row" onClick={onPause}>⏸ Pause</button>
           )}
-          {pending !== null && !answered ? (
+          {studyMode && pending !== null && !answered ? (
             <button className="btn btn-primary" onClick={() => onSelect(pending)}>
               Check Answer
             </button>
@@ -260,9 +270,7 @@ function ResultsScreen({ exam, questions, answers, elapsed, studyMode, onRetake,
 
   const domainScores = calcDomainScores(questions, answers)
 
-  const weakDomains = Object.entries(domainScores)
-    .filter(([, s]) => Math.round((s.correct / s.total) * 100) < 75)
-    .map(([name]) => name)
+  const weakDomains = getWeakDomains(domainScores)
 
   function saveJSON() {
     const data = {
@@ -392,19 +400,23 @@ export default function Exam() {
   const questionsRef= useLatest(questions)
   const elapsedRef  = useLatest(elapsed)
 
-  // Load questions on mount
+  // Re-runs when location.search changes so drill/retake navigations to the same
+  // examId path get a fresh initialisation without a full remount.
   useEffect(() => {
     if (!exam) return
+    setPhase('loading')
     loadQuestions(exam.questionFile).then(b => {
       setBank(b)
-      const qs = drillDomains
-        ? buildDrillExam(b, drillDomains, 10)
-        : buildExam(b, exam.selection)
+      // Drills always build fresh; regular exams restore the one-time snapshot
+      const qs = (drillDomains ? null : loadSnapshot(examId))
+        ?? (drillDomains
+          ? buildDrillExam(b, drillDomains, 10)
+          : buildExam(b, exam.selection))
       setQuestions(qs)
       setPhase('start')
     })
     return () => clearInterval(timerRef.current)
-  }, [examId])
+  }, [examId, location.search])
 
   function startTimer(initial = 0) {
     clearInterval(timerRef.current)
@@ -445,10 +457,16 @@ export default function Exam() {
         domainScores,
         questionResults: qs.map((q, i) => ({
           id: q.id,
-          correct: finAnswers[i]?.correct ?? false,
           domain: q.domain,
+          text: q.text,
+          options: q.options,
+          answer: q.answer,
           pattern: q.pattern,
-          text: q.text.replace(/<[^>]+>/g, '').slice(0, 120),
+          explanation: q.explanation,
+          background: q.background,
+          refs: q.refs,
+          selected: finAnswers[i]?.selected ?? null,
+          correct: finAnswers[i]?.correct ?? false,
         })),
       })
     }
@@ -458,10 +476,10 @@ export default function Exam() {
     setPhase('results')
   }
 
-  // Auto-save progress whenever question or answers change
+  // Auto-save only the small dynamic fields — questions are in the snapshot key.
   useEffect(() => {
     if (phase === 'question') {
-      saveProgress(exam.id, { current, answers, elapsed: elapsedRef.current })
+      saveProgress(exam.id, { current, answers, elapsed: elapsedRef.current, studyMode })
     }
   }, [current, answers])
 
@@ -477,13 +495,24 @@ export default function Exam() {
     setCurrent(0); setAnswers([]); setElapsed(0)
     setPaused(false)
     setPhase('question')
-    startTimer(0)
-    // Snapshot the question order immediately so resume always gets the same draw
-    saveProgress(exam.id, { current: 0, answers: [], elapsed: 0, questions: qs })
+    if (!isStudy) startTimer(0)
+    saveSnapshot(exam.id, qs)
+    saveProgress(exam.id, { current: 0, answers: [], elapsed: 0, studyMode: isStudy })
+  }
+
+  function abandon() {
+    clearInterval(timerRef.current)
+    clearProgress(exam.id)
+    setCurrent(0)
+    setAnswers([])
+    setElapsed(0)
+    setPaused(false)
+    setPhase('start')
   }
 
   function drillWeakAreas(weakDomains) {
-    navigate(`/exam/${exam.id}`, { state: { drillDomains: weakDomains } })
+    // ?s= makes location.search unique so the useEffect re-runs even on same examId
+    navigate(`/exam/${exam.id}?s=${Date.now()}`, { state: { drillDomains: weakDomains } })
   }
 
   function pause() {
@@ -498,11 +527,14 @@ export default function Exam() {
 
   function resume() {
     const s = loadProgress(exam.id)
-    if (s.questions) setQuestions(s.questions)
+    const snapshot = loadSnapshot(exam.id)
+    if (snapshot) setQuestions(snapshot)
+    const isStudy = s.studyMode ?? false
+    setStudyMode(isStudy)
     setCurrent(s.current); setAnswers(s.answers); setElapsed(s.elapsed)
     setPaused(false)
     setPhase('question')
-    startTimer(s.elapsed)
+    if (!isStudy) startTimer(s.elapsed)
   }
 
   function selectAnswer(i) {
@@ -529,7 +561,7 @@ export default function Exam() {
   const accentStyle = { '--accent': exam.accent, '--accent-dim': exam.accentDim }
 
   if (phase === 'start')
-    return <div style={accentStyle}><StartScreen exam={exam} savedState={drillDomains ? null : savedState} drillDomains={drillDomains} onStart={startFresh} onResume={resume} /></div>
+    return <div style={accentStyle}><StartScreen exam={exam} savedState={drillDomains ? null : savedState} drillDomains={drillDomains} onStart={startFresh} onResume={resume} onAbandon={abandon} /></div>
 
   if (phase === 'question')
     return (
@@ -539,7 +571,7 @@ export default function Exam() {
           answers={answers} elapsed={elapsed} studyMode={studyMode}
           paused={paused}
           onSelect={selectAnswer} onNext={next} onBack={back}
-          onPause={pause} onUnpause={unpause}
+          onPause={pause} onUnpause={unpause} onAbandon={abandon}
         />
       </div>
     )

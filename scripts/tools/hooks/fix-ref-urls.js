@@ -15,49 +15,61 @@ const { createLogger } = require('../lib/logger')
 
 const QUESTIONS_DIR = path.join(__dirname, '../../../questions')
 
+// Canonical URL map — platform.claude.com paths verified working
 const RULES = [
+  // Tool use
   { from: 'https://docs.anthropic.com/en/docs/build-with-claude/tool-use',
-    match: ['tool_choice', 'tool choice', 'forcing', 'execution order', 'force'],
-    to:   'https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use' },
-  { from: 'https://docs.anthropic.com/en/docs/build-with-claude/tool-use',
-    to:   'https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview' },
+    to:   'https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview' },
 
+  // Agentic / Agent SDK
   { from: 'https://docs.anthropic.com/en/docs/agents-and-tools',
     match: ['mcp', 'model context protocol'],
-    to:   'https://docs.anthropic.com/en/docs/agents-and-tools/mcp' },
+    to:   'https://platform.claude.com/docs/en/agents-and-tools/mcp' },
+  { from: 'https://docs.anthropic.com/en/docs/agents-and-tools',
+    match: ['agent loop', 'how the agent loop'],
+    to:   'https://platform.claude.com/docs/en/agent-sdk/agent-loop' },
   { from: 'https://docs.anthropic.com/en/docs/agents-and-tools',
     match: ['agent sdk', 'agentsdk', 'task tool', 'subagent', 'sub-agent', 'coordinator',
             'agent definition', 'orchestrat', 'allowedtools', 'allowed_tools'],
-    to:   'https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts' },
+    to:   'https://platform.claude.com/docs/en/agent-sdk/overview' },
   { from: 'https://docs.anthropic.com/en/docs/agents-and-tools',
-    to:   'https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems' },
+    to:   'https://platform.claude.com/docs/en/agent-sdk/overview' },
 
   { from: 'https://docs.anthropic.com/en/docs/build-with-claude/agentic',
-    to:   'https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems' },
+    to:   'https://platform.claude.com/docs/en/agent-sdk/overview' },
+  { from: 'https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems',
+    to:   'https://platform.claude.com/docs/en/agent-sdk/overview' },
+  { from: 'https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts',
+    to:   'https://platform.claude.com/docs/en/agent-sdk/overview' },
+  { from: 'https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/how-the-agent-loop-works',
+    to:   'https://platform.claude.com/docs/en/agent-sdk/agent-loop' },
+  { from: 'https://docs.anthropic.com/en/docs/agents/core-concepts',
+    to:   'https://platform.claude.com/docs/en/agent-sdk/overview' },
 
   { from: 'https://docs.anthropic.com/en/docs/build-with-claude',
-    to:   'https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems' },
+    to:   'https://platform.claude.com/docs/en/agent-sdk/overview' },
 
+  // Claude Code — all redirect to code.claude.com
   { from: 'https://docs.anthropic.com/en/docs/claude-code',
     match: ['hook', 'post tool', 'pre tool'],
-    to:   'https://docs.anthropic.com/en/docs/claude-code/hooks' },
+    to:   'https://code.claude.com/docs/en/hooks' },
   { from: 'https://docs.anthropic.com/en/docs/claude-code',
     match: ['skill', 'slash command', 'commands'],
-    to:   'https://docs.anthropic.com/en/docs/claude-code/skills' },
+    to:   'https://code.claude.com/docs/en/skills' },
   { from: 'https://docs.anthropic.com/en/docs/claude-code',
     match: ['setting', 'config', 'configuration', '.claude/', 'mcp.json'],
-    to:   'https://docs.anthropic.com/en/docs/claude-code/settings' },
+    to:   'https://code.claude.com/docs/en/settings' },
   { from: 'https://docs.anthropic.com/en/docs/claude-code',
     match: ['claude.md', 'claudemd', 'memory', 'import depth'],
-    to:   'https://docs.anthropic.com/en/docs/claude-code/memory' },
+    to:   'https://code.claude.com/docs/en/memory' },
   { from: 'https://docs.anthropic.com/en/docs/claude-code',
     match: ['cli', 'flag', '--print', '--output-format', 'headless'],
-    to:   'https://docs.anthropic.com/en/docs/claude-code/cli-reference' },
+    to:   'https://code.claude.com/docs/en/cli-reference' },
   { from: 'https://docs.anthropic.com/en/docs/claude-code',
     match: ['ci/cd', 'github', 'action', 'pipeline'],
-    to:   'https://docs.anthropic.com/en/docs/claude-code/github-actions' },
+    to:   'https://code.claude.com/docs/en/github-actions' },
   { from: 'https://docs.anthropic.com/en/docs/claude-code',
-    to:   'https://docs.anthropic.com/en/docs/claude-code/overview' },
+    to:   'https://code.claude.com/docs/en/overview' },
 ]
 
 function bestUrl(ref) {

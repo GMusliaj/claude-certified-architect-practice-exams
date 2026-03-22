@@ -112,49 +112,54 @@ Quality standards:
 - Three plausible distractors: each must be something an inexperienced developer might genuinely choose
 - Question stems may use HTML: <code> for inline code, <em> for emphasis — nothing else
 - All claims must be grounded in official Anthropic documentation
-- refs must link to real, specific docs.anthropic.com URLs — never a top-level index page
-- Use the most specific sub-page available. Canonical URL map (use these exact URLs):
+- refs must link to real, verified documentation URLs — never a top-level index page
+- The Anthropic docs have migrated. Use ONLY these verified working URLs (do NOT invent paths):
 
   Tool use / tool_choice:
-    https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview
-    https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use   ← for tool_choice refs
+    https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview
 
-  Agentic systems / multi-agent:
-    https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems
-    https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts
-    https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/how-the-agent-loop-works
+  Agent SDK / multi-agent orchestration:
+    https://platform.claude.com/docs/en/agent-sdk/overview
+    https://platform.claude.com/docs/en/agent-sdk/agent-loop
 
   MCP:
-    https://docs.anthropic.com/en/docs/agents-and-tools/mcp
+    https://platform.claude.com/docs/en/agents-and-tools/mcp
 
-  Prompt engineering / structured output:
-    https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview
-    https://docs.anthropic.com/en/docs/build-with-claude/structured-output
+  Prompt engineering:
+    https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview
+    https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
 
-  Batch API:
-    https://docs.anthropic.com/en/docs/build-with-claude/message-batches
+  Structured output:
+    https://platform.claude.com/docs/en/build-with-claude/structured-outputs
 
-  Claude Code:
-    https://docs.anthropic.com/en/docs/claude-code/overview         ← general / plan mode / sessions
-    https://docs.anthropic.com/en/docs/claude-code/memory           ← CLAUDE.md, context, imports
-    https://docs.anthropic.com/en/docs/claude-code/hooks            ← PostToolUse / PreToolUse hooks
-    https://docs.anthropic.com/en/docs/claude-code/skills           ← skills / slash commands
-    https://docs.anthropic.com/en/docs/claude-code/settings         ← settings.json, MCP config
-    https://docs.anthropic.com/en/docs/claude-code/cli-reference    ← CLI flags (--print, --output-format)
-    https://docs.anthropic.com/en/docs/claude-code/github-actions   ← CI/CD pipelines
+  Batch processing:
+    https://platform.claude.com/docs/en/build-with-claude/batch-processing
 
-  Context window:
-    https://docs.anthropic.com/en/docs/build-with-claude/context-windows
+  Context windows / prompt caching:
+    https://platform.claude.com/docs/en/build-with-claude/context-windows
+    https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+
+  Claude Code (docs moved to code.claude.com):
+    https://code.claude.com/docs/en/overview         ← general / plan mode / sessions
+    https://code.claude.com/docs/en/memory           ← CLAUDE.md, context, imports
+    https://code.claude.com/docs/en/hooks            ← PostToolUse / PreToolUse hooks
+    https://code.claude.com/docs/en/skills           ← skills / slash commands
+    https://code.claude.com/docs/en/settings         ← settings.json, MCP config
+    https://code.claude.com/docs/en/cli-reference    ← CLI flags (--print, --output-format)
+    https://code.claude.com/docs/en/github-actions   ← CI/CD pipelines
 
   Message API:
-    https://docs.anthropic.com/en/api/messages
+    https://platform.claude.com/docs/en/api/messages
 
-- NEVER use these generic index URLs as a ref target:
-    https://docs.anthropic.com/en/docs/agents-and-tools             ← too broad
-    https://docs.anthropic.com/en/docs/build-with-claude/tool-use   ← too broad (use /overview)
-    https://docs.anthropic.com/en/docs/build-with-claude            ← too broad
-    https://docs.anthropic.com/en/docs/claude-code                  ← too broad (use a sub-page)
-    https://docs.anthropic.com/en/docs/build-with-claude/agentic    ← old path, use /agentic-systems
+- NEVER use these broken or generic URLs:
+    https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems  ← broken (page removed)
+    https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/*      ← broken (moved)
+    https://docs.anthropic.com/en/docs/build-with-claude/structured-output ← broken (use structured-outputs)
+    https://docs.anthropic.com/en/docs/build-with-claude/batch-api         ← broken (use batch-processing)
+    https://docs.anthropic.com/en/docs/build-with-claude                   ← too broad
+    https://docs.anthropic.com/en/docs/agents-and-tools                    ← too broad
+    https://docs.anthropic.com/en/docs/claude-code                         ← broken (use code.claude.com/docs/en/*)
+    https://code.claude.com/docs/overview                                  ← wrong prefix (use /docs/en/overview)
 
 - IMPORTANT: vary which option you place in "correct" — do NOT consistently put the answer in the same position. The system will shuffle options automatically, but you must still vary placement across questions.`,
 

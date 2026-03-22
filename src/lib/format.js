@@ -1,3 +1,18 @@
+export const OPT_LABEL = ['A', 'B', 'C', 'D']
+
+export function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
+export function getWeakDomains(domainScores, threshold = 75) {
+  return Object.entries(domainScores)
+    .filter(([, s]) => Math.round((s.correct / s.total) * 100) < threshold)
+    .map(([name]) => name)
+}
+
 export function fmtTime(s) {
   const m = Math.floor(Math.abs(s) / 60)
   const sec = Math.abs(s) % 60

@@ -19,11 +19,10 @@ const path    = require('path')
 const https   = require('https')
 const http    = require('http')
 const { createLogger } = require('./lib/logger')
+const { SPA_DOMAINS, fetchBody, isNotFoundBody, TIMEOUT_MS, USER_AGENT } = require('./lib/urlcheck')
 
 const QUESTIONS_DIR = path.join(__dirname, '../../questions')
 const BANKS         = ['foundations', 'agents', 'extraction', 'full']
-const TIMEOUT_MS    = 8000
-const USER_AGENT    = 'Mozilla/5.0 (compatible; claude-exam-url-checker/1.0)'
 
 // ── CLI args ─────────────────────────────────────────────────────────────────
 const args        = process.argv.slice(2)
@@ -69,6 +68,18 @@ function checkUrl(url) {
           resolve({ url, status: res.statusCode, ok: false, error: 'bad redirect' })
           return
         }
+      }
+      // For SPA domains: HTTP 200 can still be "Not Found" — fetch body to confirm
+      if (res.statusCode === 200 && SPA_DOMAINS.has(parsed.hostname)) {
+        res.resume()
+        fetchBody(url).then(({ body }) => {
+          if (isNotFoundBody(body)) {
+            resolve({ url, status: 200, ok: false, error: 'SPA Not Found page' })
+          } else {
+            resolve({ url, status: 200, ok: true })
+          }
+        })
+        return
       }
       resolve({ url, status: res.statusCode, ok: res.statusCode < 400 })
       res.resume()

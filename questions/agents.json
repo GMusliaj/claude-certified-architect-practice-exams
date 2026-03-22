@@ -16,7 +16,7 @@
     "refs": [
       {
         "label": "Multi-agent parallelism",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -37,7 +37,7 @@
     "refs": [
       {
         "label": "Multi-agent memory patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -58,11 +58,11 @@
     "refs": [
       {
         "label": "Tool use — tool_choice",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#forcing-tool-use"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       },
       {
         "label": "Agentic patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -83,11 +83,11 @@
     "refs": [
       {
         "label": "Claude Code workflows",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       },
       {
         "label": "Agentic session patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -108,7 +108,7 @@
     "refs": [
       {
         "label": "Multi-agent synthesis patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -129,11 +129,11 @@
     "refs": [
       {
         "label": "Claude Code session patterns",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
+        "url": "https://code.claude.com/docs/en/overview"
       },
       {
         "label": "Agentic session management",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -154,7 +154,7 @@
     "refs": [
       {
         "label": "Coordinator design patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -175,11 +175,11 @@
     "refs": [
       {
         "label": "Multi-agent structured output",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       },
       {
         "label": "Prompt engineering",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices"
       }
     ]
   },
@@ -200,11 +200,11 @@
     "refs": [
       {
         "label": "Prompt caching",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching"
       },
       {
         "label": "Cost optimization patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -225,7 +225,7 @@
     "refs": [
       {
         "label": "Agentic delegation patterns",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agentic-systems"
+        "url": "https://platform.claude.com/docs/en/agent-sdk/overview"
       }
     ]
   },
@@ -344,11 +344,11 @@
     "refs": [
       {
         "label": "Handling stop reasons",
-        "url": "https://docs.anthropic.com/en/api/handling-stop-reasons"
+        "url": "https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons"
       },
       {
         "label": "Tool use with Claude",
-        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview"
+        "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
       }
     ],
     "options": [

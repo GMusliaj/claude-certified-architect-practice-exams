@@ -15,10 +15,9 @@ const path = require('path')
 const https = require('https')
 const http  = require('http')
 const { createLogger } = require('../lib/logger')
+const { SPA_DOMAINS, fetchBody, isNotFoundBody, TIMEOUT_MS, USER_AGENT } = require('../lib/urlcheck')
 
 const QUESTIONS_DIR = path.join(__dirname, '../../../questions')
-const TIMEOUT_MS    = 8000
-const USER_AGENT    = 'Mozilla/5.0 (compatible; claude-exam-url-checker/1.0)'
 
 function checkUrl(url) {
   return new Promise(resolve => {
@@ -36,7 +35,6 @@ function checkUrl(url) {
     }
     const req = lib.request(options, res => {
       if (res.statusCode === 405) {
-        // HEAD not allowed — retry GET
         options.method = 'GET'
         const req2 = lib.request(options, res2 => {
           resolve({ url, ok: res2.statusCode < 400, status: res2.statusCode })
@@ -55,6 +53,18 @@ function checkUrl(url) {
           resolve({ url, ok: false, error: 'bad redirect' })
           return
         }
+      }
+      // SPA domains return 200 for all paths — check body for "Not Found"
+      if (res.statusCode === 200 && SPA_DOMAINS.has(parsed.hostname)) {
+        res.resume()
+        fetchBody(url).then(({ body }) => {
+          if (isNotFoundBody(body)) {
+            resolve({ url, ok: false, error: 'SPA Not Found page' })
+          } else {
+            resolve({ url, ok: true, status: 200 })
+          }
+        })
+        return
       }
       resolve({ url, ok: res.statusCode < 400, status: res.statusCode })
       res.resume()
