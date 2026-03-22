@@ -979,6 +979,27 @@ button { cursor: pointer; font-family: inherit; }
 .page-nav-actions { display: flex; gap: .5rem; }
 
 /* ── Responsive ────────────────────────────────────────────────────────────── */
+/* ── Pause ─────────────────────────────────────────────────────────────────── */
+.btn-pause-row { color: var(--muted); }
+.btn-pause-row:hover { color: var(--text); border-color: #4a4a4a; }
+
+.pause-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+.pause-icon { font-size: 2.5rem; line-height: 1; }
+.pause-title { margin: 0; font-size: 1.5rem; font-weight: 700; }
+.pause-sub { margin: 0; color: var(--muted); font-size: .9rem; }
+
 @media (max-width: 600px) {
   .meta-grid { grid-template-columns: repeat(2, 1fr); }
   .dw-row    { grid-template-columns: 1fr 80px 28px; }

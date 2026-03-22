@@ -89,7 +89,7 @@ function StartScreen({ exam, savedState, drillDomains, onStart, onResume }) {
 }
 
 // ── Question Screen ───────────────────────────────────────────────────────────
-function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode, onSelect, onNext, onBack }) {
+function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode, paused, onSelect, onNext, onBack, onPause, onUnpause }) {
   const q       = questions[current]
   const answer  = answers[current]
   const answered = answer !== undefined
@@ -114,7 +114,7 @@ function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode,
               <span className="mode-badge-study">Study</span>
             ) : (
               <span className={`timer${warn ? ' warn' : ''}`}>
-                {remaining <= 0 ? 'Time up' : fmtTime(remaining)}
+                {paused ? 'Paused' : remaining <= 0 ? 'Time up' : fmtTime(remaining)}
               </span>
             )}
           </div>
@@ -125,6 +125,14 @@ function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode,
       </div>
 
       <div className="page-wrap question-wrap">
+        {paused ? (
+          <div className="pause-overlay">
+            <div className="pause-icon">⏸</div>
+            <h2 className="pause-title">Exam Paused</h2>
+            <p className="pause-sub">Your progress is saved. The timer is stopped.</p>
+            <button className="btn btn-primary" onClick={onUnpause}>Resume Exam</button>
+          </div>
+        ) : (<>
         <div className="card">
           <div className="q-meta">
             <span className="domain-pill">{q.domain}</span>
@@ -165,10 +173,15 @@ function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode,
 
         <div className="btn-row">
           <button className="btn btn-ghost" onClick={onBack} disabled={current === 0}>← Back</button>
+          {!studyMode && (
+            <button className="btn btn-ghost btn-pause-row" onClick={onPause}>⏸ Pause</button>
+          )}
           <button className="btn btn-primary" onClick={onNext} disabled={!answered}>
             {current + 1 === questions.length ? 'Finish' : 'Next →'}
           </button>
         </div>
+        </>
+      )}
       </div>
     </div>
   )
@@ -329,6 +342,7 @@ export default function Exam() {
   const [elapsed,   setElapsed]   = useState(0)
   const [bank,      setBank]      = useState([])
   const [studyMode, setStudyMode] = useState(false)
+  const [paused,    setPaused]    = useState(false)
 
   const timerRef    = useRef(null)
   const startRef    = useRef(null)
@@ -419,6 +433,7 @@ export default function Exam() {
     setStudyMode(isStudy)
     setQuestions(qs)
     setCurrent(0); setAnswers([]); setElapsed(0)
+    setPaused(false)
     setPhase('question')
     startTimer(0)
   }
@@ -427,9 +442,19 @@ export default function Exam() {
     navigate(`/exam/${exam.id}`, { state: { drillDomains: weakDomains } })
   }
 
+  function pause() {
+    clearInterval(timerRef.current)
+    setPaused(true)
+  }
+
+  function unpause() {
+    startTimer(elapsedRef.current)
+    setPaused(false)
+  }
+
   // ── Keyboard navigation (P2.2) ───────────────────────────────────────────
   useEffect(() => {
-    if (phase !== 'question') return
+    if (phase !== 'question' || paused) return
     function onKey(e) {
       const tag = e.target.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
@@ -447,11 +472,12 @@ export default function Exam() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, current])
+  }, [phase, current, paused])
 
   function resume() {
     const s = loadProgress(exam.id)
     setCurrent(s.current); setAnswers(s.answers); setElapsed(s.elapsed)
+    setPaused(false)
     setPhase('question')
     startTimer(s.elapsed)
   }
@@ -488,7 +514,9 @@ export default function Exam() {
         <QuestionScreen
           exam={exam} questions={questions} current={current}
           answers={answers} elapsed={elapsed} studyMode={studyMode}
+          paused={paused}
           onSelect={selectAnswer} onNext={next} onBack={back}
+          onPause={pause} onUnpause={unpause}
         />
       </div>
     )
