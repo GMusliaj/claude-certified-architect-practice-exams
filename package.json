@@ -12,7 +12,8 @@
     "generate": "node scripts/tools/generate_questions.js",
     "extract": "node scripts/extract-questions.js",
     "migrate": "node scripts/migrate-to-json.js",
-    "screenshot": "node scripts/screenshot.js"
+    "screenshot": "node scripts/screenshot.js",
+    "check-urls": "node scripts/tools/check_urls.js"
   },
   "engines": {
     "node": ">=22.1.0"

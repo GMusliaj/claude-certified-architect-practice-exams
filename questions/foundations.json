@@ -432,8 +432,8 @@
     "background": "Claude Code's planning mode restricts Claude to read-only tools (Read, Grep, Glob) during the exploration phase — no file edits can occur. Claude maps the codebase, identifies dependencies, proposes service boundaries, and outputs a structured implementation plan. The human reviews and approves the plan before any code is written. This separation of <em>analysis</em> from <em>execution</em> is critical for large refactors where the cost of a wrong early decision compounds across dozens of files.",
     "refs": [
       {
-        "label": "Claude Code plan mode",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/plan-mode"
+        "label": "Claude Code — Plan Mode",
+        "url": "https://docs.anthropic.com/en/docs/claude-code/overview"
       },
       {
         "label": "Claude Code overview",
@@ -2028,7 +2028,7 @@
     "refs": [
       {
         "label": "Claude Code — CLAUDE.md",
-        "url": "https://docs.anthropic.com/en/docs/claude-code/claude-md"
+        "url": "https://docs.anthropic.com/en/docs/claude-code/memory"
       }
     ],
     "options": [
