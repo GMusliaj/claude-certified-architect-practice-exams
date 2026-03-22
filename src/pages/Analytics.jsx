@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { loadHistory } from '../lib/storage'
 import exams from '../data/exams.json'
 import { fmtStudyTime } from '../lib/format'
+import ThemeToggle from '../components/ThemeToggle'
 
 // SVG sparkline — no library needed
 function Sparkline({ points }) {
@@ -91,6 +92,9 @@ export default function Analytics() {
         <div>
           <Link to="/" className="btn btn-ghost" style={{ marginRight: '.5rem' }}>← Exams</Link>
           <Link to="/history" className="btn btn-ghost">History</Link>
+        </div>
+        <div className="page-nav-actions">
+          <ThemeToggle />
         </div>
       </div>
 

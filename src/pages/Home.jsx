@@ -1,10 +1,45 @@
 import { Link } from 'react-router-dom'
 import exams from '../data/exams.json'
 import { loadProgress, loadHistory } from '../lib/storage'
+import { fmtTime, getExamTotal } from '../lib/format'
+import ThemeToggle from '../components/ThemeToggle'
 
-function ExamCard({ exam, bestPct, attemptCount }) {
-  const saved = loadProgress(exam.id)
-  const total = Object.values(exam.selection).reduce((a, b) => a + b, 0)
+function ContinueSection({ inProgress }) {
+  if (!inProgress.length) return null
+  return (
+    <div className="continue-section">
+      <p className="section-label" style={{ padding: 0, marginBottom: '.75rem' }}>Continue</p>
+      {inProgress.map(({ exam, saved }) => {
+        const total = getExamTotal(exam.selection)
+        const answered = saved.answers.filter(Boolean).length
+        const pct = Math.round((answered / total) * 100)
+        return (
+          <Link
+            key={exam.id}
+            to={`/exam/${exam.id}`}
+            className="continue-card"
+            style={{ '--accent': exam.accent, '--accent-dim': exam.accentDim }}
+          >
+            <div className="continue-card-accent" />
+            <div className="continue-card-body">
+              <span className="continue-card-title">{exam.title}</span>
+              <span className="continue-card-meta">
+                Q{saved.current + 1} of {total} · {answered} answered · {fmtTime(saved.elapsed)} elapsed
+              </span>
+              <div className="continue-progress-bar">
+                <div className="continue-progress-fill" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+            <span className="continue-card-cta">Resume →</span>
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
+function ExamCard({ exam, bestPct, attemptCount, saved }) {
+  const total = getExamTotal(exam.selection)
 
   return (
     <Link
@@ -55,6 +90,12 @@ export default function Home() {
     if (h.pct > examStats[h.examId].best) examStats[h.examId].best = h.pct
   }
 
+  const savedMap = Object.fromEntries(exams.map(e => [e.id, loadProgress(e.id)]))
+
+  const inProgress = exams
+    .map(exam => ({ exam, saved: savedMap[exam.id] }))
+    .filter(({ saved }) => saved && (saved.current > 0 || saved.answers?.some(Boolean)))
+
   return (
     <div className="home">
       <header className="home-header">
@@ -62,6 +103,7 @@ export default function Home() {
           <Link to="/history">History</Link>
           <Link to="/analytics">Analytics</Link>
           <a href="/backlog.html">Backlog</a>
+          <ThemeToggle />
         </nav>
 <h1 className="home-title">Claude Certified Architect</h1>
         <p className="home-subtitle">
@@ -71,12 +113,14 @@ export default function Home() {
       </header>
 
       <div className="page-wrap" style={{ paddingTop: '1rem' }}>
+        <ContinueSection inProgress={inProgress} />
         <p className="section-label" style={{ padding: 0 }}>Exams</p>
         <div className="exam-grid" style={{ padding: 0, marginBottom: '2rem' }}>
           {exams.map(exam => (
           <ExamCard
             key={exam.id}
             exam={exam}
+            saved={savedMap[exam.id]}
             bestPct={examStats[exam.id]?.best ?? 0}
             attemptCount={examStats[exam.id]?.count ?? 0}
           />

@@ -4,7 +4,7 @@ import exams from '../data/exams.json'
 import { loadQuestions } from '../lib/loadQuestions'
 import { buildExam, buildDrillExam } from '../lib/buildExam'
 import { saveProgress, loadProgress, clearProgress, saveResult } from '../lib/storage'
-import { fmtTime, calcDomainScores } from '../lib/format'
+import { fmtTime, calcDomainScores, getExamTotal } from '../lib/format'
 
 const OPT_LABEL = ['A', 'B', 'C', 'D']
 
@@ -18,7 +18,7 @@ function useLatest(value) {
 // ── Start Screen ──────────────────────────────────────────────────────────────
 function StartScreen({ exam, savedState, drillDomains, onStart, onResume }) {
   const [study, setStudy] = useState(false)
-  const total = drillDomains ? 10 : Object.values(exam.selection).reduce((a, b) => a + b, 0)
+  const total = drillDomains ? 10 : getExamTotal(exam.selection)
   return (
     <div className="start-screen">
       <div className="start-inner">
@@ -90,17 +90,53 @@ function StartScreen({ exam, savedState, drillDomains, onStart, onResume }) {
 
 // ── Question Screen ───────────────────────────────────────────────────────────
 function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode, paused, onSelect, onNext, onBack, onPause, onUnpause }) {
-  const q       = questions[current]
-  const answer  = answers[current]
+  const q        = questions[current]
+  const answer   = answers[current]
   const answered = answer !== undefined
   const remaining = exam.timeLimitMin * 60 - elapsed
   const warn      = remaining <= exam.warnSecs
 
+  const [pending, setPending] = useState(null)
+  const pendingRef = useLatest(pending)
+
+  useEffect(() => { setPending(null) }, [current])
+
+  // Keyboard navigation — lives here so it can read/set pending
+  useEffect(() => {
+    if (paused) return
+    function onKey(e) {
+      const tag = e.target.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (!answered) {
+        if (e.key === '1') setPending(0)
+        else if (e.key === '2') setPending(1)
+        else if (e.key === '3') setPending(2)
+        else if (e.key === '4') setPending(3)
+        else if ((e.key === 'Enter' || e.key === ' ') && pendingRef.current !== null) {
+          e.preventDefault()
+          onSelect(pendingRef.current)
+        }
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        onNext()
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+        e.preventDefault()
+        onBack()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [paused, current, answered])
+
   function optClass(i) {
-    if (!answered) return 'option'
-    if (i === q.answer) return 'option correct'
-    if (i === answer.selected) return 'option wrong'
-    return 'option disabled'
+    if (answered) {
+      if (i === q.answer)      return 'option correct'
+      if (i === answer.selected) return 'option wrong'
+      return 'option disabled'
+    }
+    if (i === pending) return 'option pending'
+    return 'option'
   }
 
   return (
@@ -142,7 +178,7 @@ function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode,
 
           <div className="options">
             {q.options.map((opt, i) => (
-              <button key={i} className={optClass(i)} onClick={() => onSelect(i)}>
+              <button key={i} className={optClass(i)} onClick={() => setPending(i)}>
                 <span className="option-key">{OPT_LABEL[i]}</span>
                 <span className="option-text" dangerouslySetInnerHTML={{ __html: opt }} />
               </button>
@@ -176,9 +212,15 @@ function QuestionScreen({ exam, questions, current, answers, elapsed, studyMode,
           {!studyMode && (
             <button className="btn btn-ghost btn-pause-row" onClick={onPause}>⏸ Pause</button>
           )}
-          <button className="btn btn-primary" onClick={onNext} disabled={!answered}>
-            {current + 1 === questions.length ? 'Finish' : 'Next →'}
-          </button>
+          {pending !== null && !answered ? (
+            <button className="btn btn-primary" onClick={() => onSelect(pending)}>
+              Check Answer
+            </button>
+          ) : (
+            <button className="btn btn-primary" onClick={onNext} disabled={!answered}>
+              {current + 1 === questions.length ? 'Finish' : 'Next →'}
+            </button>
+          )}
         </div>
         </>
       )}
@@ -436,6 +478,8 @@ export default function Exam() {
     setPaused(false)
     setPhase('question')
     startTimer(0)
+    // Snapshot the question order immediately so resume always gets the same draw
+    saveProgress(exam.id, { current: 0, answers: [], elapsed: 0, questions: qs })
   }
 
   function drillWeakAreas(weakDomains) {
@@ -452,30 +496,9 @@ export default function Exam() {
     setPaused(false)
   }
 
-  // ── Keyboard navigation (P2.2) ───────────────────────────────────────────
-  useEffect(() => {
-    if (phase !== 'question' || paused) return
-    function onKey(e) {
-      const tag = e.target.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return
-      if (e.key === '1') selectAnswer(0)
-      else if (e.key === '2') selectAnswer(1)
-      else if (e.key === '3') selectAnswer(2)
-      else if (e.key === '4') selectAnswer(3)
-      else if ((e.key === 'Enter' || e.key === ' ') && answersRef.current[current] !== undefined) {
-        e.preventDefault()
-        next()
-      } else if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
-        e.preventDefault()
-        back()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [phase, current, paused])
-
   function resume() {
     const s = loadProgress(exam.id)
+    if (s.questions) setQuestions(s.questions)
     setCurrent(s.current); setAnswers(s.answers); setElapsed(s.elapsed)
     setPaused(false)
     setPhase('question')

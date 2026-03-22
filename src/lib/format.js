@@ -10,6 +10,10 @@ export function fmtStudyTime(s) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
+export function getExamTotal(selection) {
+  return Object.values(selection).reduce((a, b) => a + b, 0)
+}
+
 // Domain score aggregation used in ResultsScreen and doFinish
 export function calcDomainScores(questions, answers) {
   const scores = {}

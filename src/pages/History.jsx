@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { loadHistory, clearHistory } from '../lib/storage'
 import exams from '../data/exams.json'
 import { fmtTime } from '../lib/format'
+import ThemeToggle from '../components/ThemeToggle'
 
 function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -32,6 +33,9 @@ export default function History() {
         <div>
           <Link to="/" className="btn btn-ghost" style={{ marginRight: '.5rem' }}>← Exams</Link>
           <Link to="/analytics" className="btn btn-ghost">Analytics</Link>
+        </div>
+        <div className="page-nav-actions">
+          <ThemeToggle />
         </div>
         {history.length > 0 && (
           <button className="btn btn-ghost" onClick={handleClear} style={{ color: 'var(--red)' }}>
