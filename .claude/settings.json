@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/tools/hooks/archive-webfetch.js"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/tools/hooks/validate-questions.js"
+          },
+          {
+            "type": "command",
+            "command": "node scripts/tools/hooks/render-backlog.js"
+          }
+        ]
+      }
+    ]
+  }
+}

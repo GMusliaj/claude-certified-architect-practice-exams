@@ -1,0 +1,5 @@
+node_modules
+logs/
+materials/
+.claude/settings.local.json
+dist

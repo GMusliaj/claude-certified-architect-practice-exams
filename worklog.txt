@@ -1,0 +1,202 @@
+================================================================================
+CLAUDE CERTIFIED ARCHITECT — EXAM GUIDE  |  WORKLOG
+================================================================================
+Last updated : 2026-03-22 (session 2)
+Maintainer  : Claude (auto-updated each session)
+
+HOW TO READ THIS FILE
+  [x] = completed
+  [-] = in progress
+  [ ] = pending / not started
+  [!] = blocked
+  Each task has an ID (P1.1, P2.1, …) used in CLAUDE.md and commit messages.
+
+================================================================================
+AUDIT BASELINE (2026-03-22)
+================================================================================
+
+Scoring across four quality dimensions after full codebase scan:
+
+  Content Quality       9.0 / 10   Pattern-grounded, deep explanations, verified
+  Content Completeness  8.5 / 10   foundations.json underpowered (58Q for 30Q exam)
+  Exam UX               9.5 / 10   Missing: study mode, keyboard nav, hints
+  Personalization       5.0 / 10   No history, no analytics, no weak-area drill
+  ─────────────────────────────────────────────────────────────────────────────
+  Composite             8.0 / 10
+
+================================================================================
+PRIORITY 1 — PERSONALIZATION  (target: 5 → 8.5)
+================================================================================
+
+  [x] P1.1  Score history engine
+            storage.js: saveResult() / loadHistory() / clearHistory().
+            Each entry: { id, examId, examTitle, date, score, total, pct, pass,
+            elapsed, domainScores, questionResults }.
+            Exam.jsx calls saveResult() in doFinish() before transitioning to results.
+
+  [x] P1.2  Dashboard page
+            Replaced by two dedicated React pages:
+              · /history (History.jsx)  — full attempt list with filter tabs + stats bar
+              · /analytics (Analytics.jsx) — domain perf, hardest Qs, sparkline trends
+            Both linked from Home header nav. Updates live on next render after
+            returning from an exam.
+
+  [x] P1.3  Weak-area drill mode
+            buildExam.js: buildDrillExam(bank, weakDomains, count=10) added.
+            ResultsScreen: computes weakDomains (domains < 75%) and shows
+            "Drill Weak Areas (N)" button (blue) when any exist.
+            Exam controller: reads location.state?.drillDomains; if present,
+            uses buildDrillExam instead of buildExam.
+            StartScreen: shows "Weak-Area Drill" label + targeted domain list
+            + "10 questions · no pass/fail verdict" notice.
+
+  [x] P1.4  Best score badges on index cards
+            Home.jsx: loadHistory() on render, computes per-exam { best, count }.
+            ExamCard: shows "Best: X% · N attempts" pill (green dot = pass,
+            red dot = fail) or "Not started" (dimmed) when no history.
+            Updates without page refresh on Back navigation.
+
+================================================================================
+PRIORITY 2 — UX POLISH  (target: 9.5 → 10)
+================================================================================
+
+  [x] P2.1  Study mode toggle
+            StartScreen: "Exam Mode" / "Study Mode" radio toggle (two-card layout).
+            Study mode: timer replaced by amber "Study" badge; no pass/fail ring —
+            results show amber circle + "Learning Summary" heading; attempt NOT saved
+            to history (only real exam attempts are tracked). Drill mode is also
+            treated as study (no history save).
+
+  [x] P2.2  Keyboard navigation
+            1 / 2 / 3 / 4  →  select option A / B / C / D
+            Enter or Space  →  advance to next question (when answered)
+            ArrowLeft / Backspace  →  go to previous question
+            Implemented via useEffect keydown listener scoped to phase==='question'.
+            Works in both exam and study modes; safely skips INPUT/TEXTAREA targets.
+
+================================================================================
+PRIORITY 3 — CONTENT COMPLETENESS  (target: 8.5 → 9.5)
+================================================================================
+
+  [x] P3.1  Expand foundations.json to 100+ questions
+            Ran 7 batches total; fetched Claude Code hooks + settings docs to
+            close the D3 gap. 10 questions flagged and removed by verify pass.
+            Final: 143 questions (was 58). Overall draw ratio: 4.8×.
+            Domain distribution (draw × bank ratio):
+              D1 Agentic:      33  (8 draws → 4.1×)
+              D2 Tool Design:  40  (5 draws → 8.0×)
+              D3 Claude Code:  20  (6 draws → 3.3× — hit target exactly)
+              D4 Prompt Eng:   24  (6 draws → 4.0×)
+              D5 Context:      26  (5 draws → 5.2×)
+            All 143 questions passed validate-questions hook.
+
+================================================================================
+COMPLETED
+================================================================================
+
+── Session 2026-03-22 — Legal & Attribution ──────────────────────────────────
+
+  [x] LEGAL LICENSE.md created (MIT)
+
+  [x] LEGAL DISCLAIMER.md created
+            Hobby project notice, no Anthropic affiliation statement, purpose
+            statement (demonstrating Claude ecosystem: hooks, MCP, prompting),
+            table of 9 official Anthropic documentation links, accuracy caveat.
+
+  [x] LEGAL index.html footer added
+            One-line disclaimer + link to official docs + Disclaimer / License
+            links. Visible on every page load.
+
+── Session 2026-03-22 — Tutor Role, Backlog Board & Tracking ─────────────────
+
+  [x] AUD   Full 4-dimension codebase audit
+            Content Quality 9.0 | Completeness 8.5 | UX 9.5 | Personalization 5.0
+            Composite 8.0/10. Gap analysis documented; priority task list created.
+
+  [x] AUD   CLAUDE.md rewritten with tutor role
+            Role expanded to: content author + platform builder + personalisation
+            owner. Worklog imported via @worklog.txt. Task table added so every
+            new session opens with full context.
+
+  [x] AUD   worklog.txt created
+            Audit baseline, all pending tasks with acceptance criteria, and full
+            history of INIT-phase completed work captured in one file.
+
+  [x] AUD   backlog.html — visual backlog board
+            Parchment cards on brown corkboard background. Caveat handwritten font.
+            Status icons: ✓ done · ⟳ in-progress · ○ pending · ⚠ blocked.
+            Progress bars per section + overall completion counter.
+            Audit baseline rendered as score bars.
+
+  [x] AUD   render-backlog.js — PostToolUse hook
+            Fires on every Write to worklog.txt. Parses worklog and regenerates
+            backlog.html automatically. Logs to logs/render-backlog-<datetime>.log.
+
+  [x] AUD   settings.json — render-backlog.js wired into Write hook array
+            Runs alongside validate-questions.js on every Write tool call.
+
+  [x] AUD   index.html — 📋 Backlog nav link added to page header
+            Top-right corner of header; styled to match existing palette.
+            Replaced earlier standalone button (removed to avoid duplication).
+
+── Session 2026-03-22 (session 2) — React/Vite migration + Personalization ───
+
+  [x] ARCH  Migrated from 4× standalone HTML to React+Vite SPA
+            src/App.jsx routes: / · /exam/:id · /history · /analytics
+            src/lib/: buildExam.js · loadQuestions.js · storage.js · format.js
+            src/data/exams.json — single source of truth for all 4 exam configs
+            src/pages/: Home · Exam · History · Analytics
+            Archived original HTML files to archived/
+
+  [x] P1.1  Score history engine (see above — implemented in storage.js + Exam.jsx)
+
+  [x] P1.2  History + Analytics pages (see above)
+
+  [x] P1.3  Weak-area drill mode (see above)
+
+  [x] P1.4  Best score badges on index cards (see above)
+
+  [x] P2.1  Study mode toggle (see above)
+
+  [x] P2.2  Keyboard navigation (see above)
+
+  [x] P3.1  Expand foundations.json to 100+ questions (see above)
+
+── Session 2026-03-22 — Session Randomization (full.json expansion) ──────────
+
+  [x] RAND  full.json expanded: 60 → 89 questions
+            Generated 3 batches of 10 (1 flagged/removed by verification pass).
+            Domain distribution: D1=25 D2=22 D3=14 D4=15 D5=13.
+            Draw count 60 < bank 89 → each session now gets a unique subset.
+
+── Session prior — Foundation Build (INIT phase) ─────────────────────────────
+
+  [x] INIT  Initial HTML structure for all 4 exams
+            exam.html · exam-agents-advanced.html · exam-extraction-reliability.html
+            exam-full.html
+
+  [x] INIT  Timer: practice vs official time; time-taken comparison on results
+
+  [x] INIT  Questions extracted from HTML into JSON banks
+            questions/foundations.json · agents.json · extraction.json · full.json
+
+  [x] INIT  buildExam() — domain-weighted random sampling from JSON bank
+
+  [x] INIT  Session randomization: banks expanded so draw < bank size
+            foundations: 30→58Q | agents: 10→20Q | extraction: 10→20Q
+            full: 60→89Q
+
+  [x] INIT  Content generation pipeline
+            fetch_materials.js + search_for_materials.js + generate_questions.js
+
+  [x] INIT  PostToolUse hooks: archive-webfetch + validate-questions
+
+  [x] INIT  Logging: all scripts log to logs/<tool-datetime>.log
+
+  [x] INIT  Search caching: persistent cache in materials bank (no re-runs)
+
+  [x] INIT  Slash commands: /fetch  /search  /generate
+
+  [x] INIT  README.md: full installation, usage, caveats documentation
+
+================================================================================

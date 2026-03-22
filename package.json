@@ -1,0 +1,33 @@
+{
+  "name": "claude-exam-guide",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "node scripts/serve.js dist",
+    "start:8090": "node scripts/serve.js dist 8090",
+    "serve": "npx --yes serve dist --listen 3069",
+    "fetch": "node scripts/tools/fetch_materials.js",
+    "search": "node scripts/tools/search_for_materials.js",
+    "generate": "node scripts/tools/generate_questions.js",
+    "extract": "node scripts/extract-questions.js",
+    "migrate": "node scripts/migrate-to-json.js",
+    "screenshot": "node scripts/screenshot.js"
+  },
+  "engines": {
+    "node": ">=22.1.0"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.24.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "playwright": "^1.58.2",
+    "vite": "^5.3.1"
+  },
+  "optionalDependencies": {
+    "pdf-parse": "^1.1.1"
+  }
+}

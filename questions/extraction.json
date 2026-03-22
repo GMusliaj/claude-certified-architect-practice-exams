@@ -1,0 +1,482 @@
+[
+  {
+    "id": 1,
+    "domain": "Schema Design & Extraction",
+    "text": "An insurance claim processing pipeline extracts claim types from incoming forms. The initial schema has an <code>enum</code> for <code>claim_type</code>: <code>[\"auto\", \"home\", \"health\", \"life\"]</code>. Every month, edge cases appear — an aquatic sports injury, a rideshare vehicle claim, a drone damage claim — and the team keeps adding new enum values. Schema migrations are breaking downstream consumers. What schema design prevents this?",
+    "options": [
+      "Use a confidence score — high confidence maps to known types, low confidence indicates edge cases",
+      "Add a catch-all <code>\"other\"</code> enum value plus a <code>claim_type_detail</code> string field — known types use the enum; unknown types use 'other' with a description in the detail field",
+      "Use a free-text string field instead of an enum so any claim type can be captured",
+      "Expand the enum every quarter via a scheduled migration to include all newly observed types"
+    ],
+    "answer": 1,
+    "pattern": "Resilient Schema — Catch-All Enum",
+    "explanation": "Expanding enums reactively is the anti-pattern: every new edge case requires a schema migration that breaks downstream consumers. The resilient pattern: a stable enum of common values plus <code>\"other\"</code> as a permanent catch-all, paired with a <code>detail</code> string field for open-ended description. This schema never needs to change as new claim types appear — they always have a home. Downstream consumers are never broken. The detail field provides the specificity that the enum can't capture.",
+    "background": "Enum fields in extraction schemas have a fragility problem: they must enumerate every possible value in advance, but the real world produces novel values continuously. The resilient schema pattern adds two things to every enum: (1) an <code>\"other\"</code> value as a permanent catch-all, and (2) a paired string field (e.g., <code>claim_type_detail</code>) for free-form description when the catch-all is used. This schema is stable across all edge cases. Free-text fields alone lose the structured benefit of enums for the 95% of known types.",
+    "refs": [
+      {
+        "label": "Structured output patterns",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      },
+      {
+        "label": "Tool use — JSON schemas",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "domain": "Schema Design & Extraction",
+    "text": "A contract extraction pipeline produces a <code>total_value</code> field. In 6% of contracts, the extracted total doesn't match the sum of line items. The team wants to flag these for human review. Currently, reviewers must manually re-read each contract to verify totals. What schema addition reduces manual work?",
+    "options": [
+      "Add both <code>stated_total</code> (the total as written in the contract) and <code>calculated_total</code> (sum of all extracted line items) — flag for human review only when they differ",
+      "Add a <code>reviewer_notes</code> field and ask Claude to pre-fill it with a summary when totals seem inconsistent",
+      "Remove the <code>total_value</code> field and require humans to calculate all totals",
+      "Add a <code>confidence</code> score — only review contracts where confidence is below 0.9"
+    ],
+    "answer": 0,
+    "pattern": "Mathematical Consistency — Dual Total Fields",
+    "explanation": "Adding both <code>stated_total</code> and <code>calculated_total</code> enables automated consistency checking: flag for human review when they differ, pass automatically when they match. This converts a manual 'read every contract' process into an automated comparison that surfaces only the 6% discrepant cases. It also provides structured data that helps reviewers — they see exactly which value was stated vs. what the line items sum to, rather than re-reading the full contract.",
+    "background": "Mathematical consistency is a production extraction pattern: wherever a document contains both a stated aggregate (the total as printed) and constituent values (line items that should sum to the total), extract both and compare. <code>calculated_total</code> is the model's sum of all extracted line items; <code>stated_total</code> is the total as explicitly written in the document. When they match, automation is safe. When they differ, flag for human review with both values visible — reviewers can immediately identify which is likely the error without re-reading.",
+    "refs": [
+      {
+        "label": "Structured output",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      },
+      {
+        "label": "Tool use schemas",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "domain": "Schema Design & Extraction",
+    "text": "An extraction pipeline needs to normalize date formats across documents. Documents use formats including 'January 15, 2024', '15/01/2024', '2024-01-15', and '15 Jan 24'. Temperature 0 is set but the model still occasionally outputs inconsistent formats. What is the most effective normalization approach?",
+    "options": [
+      "Set temperature to 0 and use a strict output schema with a regex pattern constraint",
+      "Post-process the output with a date parsing library that handles all common formats",
+      "Use a validator that retries with stricter instructions when the format is wrong",
+      "Add 2–3 few-shot examples in the prompt showing each input format mapped to ISO 8601 output — format normalization is a pattern-matching task that responds well to few-shot demonstration"
+    ],
+    "answer": 3,
+    "pattern": "Few-Shot Examples for Format Normalization",
+    "explanation": "Format normalization is exactly the use case for few-shot examples: the model needs to learn the mapping from varied inputs to a standard output, and this is best demonstrated through examples rather than described in prose. 2–3 examples showing 'January 15, 2024' → '2024-01-15', '15/01/2024' → '2024-01-15', etc. train the model on the pattern directly. Temperature 0 ensures determinism but doesn't teach the format. Post-processing is a valid complement but doesn't fix the model's own output.",
+    "background": "Few-shot examples are the primary mechanism for teaching format normalization to Claude. Unlike semantic instructions ('output dates in ISO 8601 format'), few-shot examples demonstrate the transformation pattern directly — including edge cases like 2-digit years, non-English month names, and ambiguous day/month ordering. The model learns to generalize the mapping from the examples. 2–3 well-chosen examples covering representative input variations is typically sufficient. Temperature 0 makes normalization deterministic but does not teach the pattern.",
+    "refs": [
+      {
+        "label": "Prompt engineering — few-shot",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "domain": "Compliance & Human-in-the-Loop",
+    "text": "A financial services agent has a system prompt: <code>\"CRITICAL COMPLIANCE POLICY: Never process transactions above $10,000 without explicit human approval. This is a regulatory requirement.\"</code> Post-launch monitoring shows the agent processes 2.1% of high-value transactions without approval. Strengthening the prompt language has not reduced this rate. What is the correct architectural fix?",
+    "options": [
+      "Add the compliance rule to three separate places in the system prompt for reinforcement",
+      "Add a few-shot example showing the agent correctly refusing a $10,000+ transaction",
+      "Use a separate validation model to review each transaction before the main agent processes it",
+      "Implement an application-layer intercept: before any transaction tool executes, check the amount server-side and block + route to human queue if it exceeds $10,000 — remove model discretion entirely"
+    ],
+    "answer": 3,
+    "pattern": "Zero-Tolerance Compliance — App-Layer Intercept",
+    "explanation": "Even emphatic system prompts have residual failure rates (~2–3%) for compliance-critical rules. This is inherent to the probabilistic nature of language models. For regulatory requirements, a 2.1% failure rate is not acceptable. The architectural standard: remove model discretion entirely via an application-layer intercept that runs before the tool executes, server-side. The model never gets to 'decide' — the transaction is blocked by infrastructure, not by the model's compliance with a prompt.",
+    "background": "Zero-tolerance compliance requirements cannot be enforced via prompts alone. The production standard: application-layer intercepts that block the tool call <em>server-side</em> before it reaches the model's tool execution path. This runs at the infrastructure layer — it's equivalent to a middleware guard. The model's instructions tell it to route high-value transactions to human approval; the intercept <em>enforces</em> this regardless of what the model infers. Model discretion is removed entirely for compliance-critical thresholds. This is the same principle as PreToolUse hooks in Claude Code, applied to production API systems.",
+    "refs": [
+      {
+        "label": "Agentic safety patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      },
+      {
+        "label": "Claude Code hooks",
+        "url": "https://docs.anthropic.com/en/docs/claude-code/hooks"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "domain": "Compliance & Human-in-the-Loop",
+    "text": "A customer support agent detects what might be an escalation need. The system uses a sentiment classifier (negative > 0.7 triggers escalation) and asks the model to rate its own confidence on a 1–10 scale (below 6 triggers escalation). After launch, the escalation rate is 3× higher than expected, with many false positives. What is the most reliable escalation trigger?",
+    "options": [
+      "Add a second model call to validate the escalation decision before triggering",
+      "Use only the sentiment classifier and remove the self-confidence scale",
+      "Calibrate the sentiment threshold to 0.85 and the confidence threshold to 4 to reduce false positives",
+      "Replace both with explicit categorical rules: escalate on (1) explicit 'I want a human,' (2) mentions of legal/regulatory terms, (3) threat of account cancellation — triggers that have clear semantic meaning"
+    ],
+    "answer": 3,
+    "pattern": "Reliable Escalation Triggers",
+    "explanation": "Sentiment scores and model self-confidence ratings are both unreliable escalation signals. Sentiment classifiers produce continuous scores with arbitrary thresholds that don't map cleanly to escalation need. Model self-confidence (1–10) correlates poorly with actual accuracy and varies by topic. Explicit categorical triggers based on semantic content are far more reliable: 'I want a human' is an unambiguous escalation request; legal/regulatory mentions have clear risk implications; cancellation threats have clear business stakes. These triggers have defined meaning and can be evaluated precisely.",
+    "background": "Escalation triggers require signals that reliably distinguish cases needing human attention from those the agent can handle. Sentiment scores and model self-confidence are both continuous signals with arbitrary thresholds — calibrating them correctly requires extensive labeled data and they drift over time. Categorical semantic triggers (explicit human request, legal term mention, threat keywords) have stable, interpretable meaning and near-zero false-negative rates for their specific triggers. The combination: explicit semantic triggers for immediate escalation, plus a structured handoff payload (customer_id, issue_type, conversation summary, recommended_action).",
+    "refs": [
+      {
+        "label": "Agentic escalation patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      },
+      {
+        "label": "Prompt engineering",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "domain": "Compliance & Human-in-the-Loop",
+    "text": "A customer support agent escalates a complex billing dispute to a human agent. The escalation payload currently passes the full 47-turn conversation transcript. Human agents spend 8–12 minutes reading context before they can help the customer. What is the correct escalation handoff design?",
+    "options": [
+      "Let the human agent request specific turns from the transcript as needed via a lookup tool",
+      "Pass a structured summary payload: <code>{customer_id, issue_type, root_cause, actions_taken, failed_resolutions, recommended_action}</code> — dense, structured, immediately actionable",
+      "Pass only the most recent 10 turns to give the human agent the latest context",
+      "Pass the full transcript but add a TL;DR summary at the beginning"
+    ],
+    "answer": 1,
+    "pattern": "Structured Escalation Handoff",
+    "explanation": "The human agent needs to resolve the customer's issue, not reconstruct what happened. A structured payload with customer_id (immediate account lookup), issue_type (frames the domain), root_cause (what actually went wrong), actions_taken (what was already tried), failed_resolutions (what didn't work), and recommended_action (the agent's suggested next step) gives the human agent everything they need in seconds. Full transcripts require reconstruction. Recent turns miss earlier context. TL;DR + transcript is still 47 turns to scan.",
+    "background": "The escalation handoff is a knowledge transfer problem: the agent has built up context over a conversation that a human must quickly absorb. A raw transcript is maximally complete but minimally usable — the human must extract the relevant facts under time pressure. A structured payload is the inverse: it's information-dense, field-indexed, and immediately actionable. The standard fields: customer_id (for account access), root_cause (what's actually wrong), actions_taken (avoid re-trying failed approaches), recommended_action (direct guidance). The full transcript is available as a reference if needed, but the payload drives the handoff.",
+    "refs": [
+      {
+        "label": "Agentic escalation patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "domain": "Error Handling & Validation",
+    "text": "A medical records extraction tool returns this response when the patient record database is unreachable: <code>{\"medications\": [], \"diagnoses\": [], \"allergies\": []}</code>. The downstream agent interprets these as confirmed empty fields and updates the patient profile with no medications, no diagnoses, and no allergies. What is wrong and how should the tool response be fixed?",
+    "options": [
+      "Return <code>null</code> instead of <code>[]</code> for each field when the database is unreachable",
+      "Add a warning message to the response: 'Database may be unreachable, please verify'",
+      "Return <code>{isError: true, errorCategory: \"transient\", isRetryable: true, message: \"Patient record database unreachable — all fields unverified\"}</code> — structurally distinct from a valid empty record",
+      "Throw an exception so the calling agent knows something went wrong"
+    ],
+    "answer": 2,
+    "pattern": "Graceful Tool Failure — Access vs Valid Empty",
+    "explanation": "An unreachable database and a patient with no medications/diagnoses/allergies produce identical-looking responses — but require opposite downstream actions. The access failure must be structurally distinct: an error object with isError=true, errorCategory (transient — the database will likely be reachable later), and isRetryable=true. The downstream agent can then retry, escalate, or hold the update rather than writing false 'confirmed empty' data to a patient profile. In medical contexts, this distinction is patient safety.",
+    "background": "Tool failure categories must be structurally distinct from success responses — especially when an empty success result could have harmful consequences. In medical contexts, <em>unable to retrieve medications</em> vs <em>confirmed: patient takes no medications</em> is a patient safety distinction. The error object schema: <code>{isError: true, errorCategory: \"transient\"|\"validation\"|\"permission\", isRetryable: boolean, message: \"human-readable description\"}</code>. The downstream agent can pattern-match on <code>isError</code> to route to retry/escalation rather than proceeding with empty-field semantics.",
+    "refs": [
+      {
+        "label": "Tool use error handling",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      },
+      {
+        "label": "Agentic reliability patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "domain": "Error Handling & Validation",
+    "text": "A pipeline extracts financial data across 50,000 documents monthly. A progress report after 3 months shows: overall accuracy 91%, goal achieved. A deeper analysis reveals: standard invoices (72% of volume) = 99% accuracy; international invoices with foreign currencies (18%) = 78%; handwritten receipts (10%) = 45%. What should happen next?",
+    "options": [
+      "Pause automation for handwritten receipts and international invoices; implement segmented thresholds: standard invoices remain fully automated, handwritten receipts require human review, international invoices use a lower automation threshold with spot-checking",
+      "Add more training examples for handwritten receipts and international invoices and re-evaluate",
+      "The 91% aggregate exceeds the target — proceed with full automation",
+      "Increase the confidence threshold from 90% to 95% to catch more errors"
+    ],
+    "answer": 0,
+    "pattern": "Segmented Confidence Thresholds",
+    "explanation": "A 91% aggregate masks a 45% automation accuracy on handwritten receipts — a catastrophic rate. The correct response: different document segments require different automation strategies based on their actual accuracy. Standard invoices at 99% → fully automated. International invoices at 78% → automation with spot-check review. Handwritten receipts at 45% → full human review queue. A uniform threshold applied to the aggregate is the exact anti-pattern that produces this outcome. Segment first, then set thresholds per segment.",
+    "background": "Field-level and segment-level confidence calibration is the prerequisite for safe automation deployment. An aggregate 91% accuracy metric is computed across all segments — it masks catastrophic performance on minority segments. The correct deployment model: compute accuracy by document type, field type, and other meaningful subgroups separately. Set automation thresholds per segment based on the segment's actual accuracy. High-accuracy segments run fully automated; low-accuracy segments route to human review. The aggregate metric is useful for reporting, not for deployment gating.",
+    "refs": [
+      {
+        "label": "Prompt engineering & evaluation",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "domain": "Schema Design & Extraction",
+    "text": "A pipeline processes 10,000-word regulatory documents into structured summaries. Over time, the summaries show degraded quality for information in the middle of long documents: key dates and percentages are missing or vague, while content from the first and last sections is reliably extracted. No changes were made to the prompt or model. What is the cause and fix?",
+    "options": [
+      "The lost-in-the-middle effect: models attend more strongly to content at the beginning and end of long contexts. Fix: restructure extraction to place a 'critical facts block' at the beginning and end of the prompt, not buried in the middle",
+      "The model's context window has been exceeded — use chunking to process documents in parts",
+      "The summarization instruction needs to be more specific about which sections to prioritize",
+      "Temperature drift in long contexts — reduce temperature to 0 for long document processing"
+    ],
+    "answer": 0,
+    "pattern": "Lost-in-the-Middle Effect",
+    "explanation": "The lost-in-the-middle effect is well-documented: LLMs attend more strongly to content at the START and END of long contexts, with degraded attention to the middle. For a 10,000-word document, dates and percentages buried in section 4 of 8 are in the least-attended region. The fix: extract critical facts (all dates, all percentages, all numeric values) into a structured 'case facts block' at the beginning of the document before the full text, so they appear in the high-attention start position. Progressive summarization that doesn't preserve specifics loses these values permanently.",
+    "background": "Lost-in-the-middle is not about context window overflow — it occurs well within the context window. The model's attention mechanism prioritizes positions near the beginning and end of the input. Critical information (dates, percentages, proper nouns, numerical values) placed in the middle of long documents receives degraded recall. The mitigation strategy for extraction: before the full document text, insert a 'critical facts block' that lists all numerical values, dates, and key identifiers explicitly. This places them in the high-attention start position while the full text remains available for reference.",
+    "refs": [
+      {
+        "label": "Long context best practices",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/long-context"
+      },
+      {
+        "label": "Prompt engineering",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "domain": "Error Handling & Validation",
+    "text": "A contract analysis pipeline uses Pydantic to validate structured output. The model produces valid JSON that passes schema validation, but downstream consumers report that <code>jurisdiction</code> values contain entries like <code>\"New York, NY\"</code> when the field is defined as an ISO 3166-2 state code. The schema passes validation but the semantic content is wrong. What validation approach catches this?",
+    "options": [
+      "Add few-shot examples showing the correct jurisdiction format",
+      "Add regex validation to reject entries containing commas",
+      "Extend Pydantic validators with semantic validation: field-level validators that check enum membership (valid ISO codes), format constraints (length, pattern), and cross-field consistency — not just structural type-checking",
+      "Increase the model's temperature to explore more output variation"
+    ],
+    "answer": 2,
+    "pattern": "Pydantic — Structural vs Semantic Validation",
+    "explanation": "Pydantic by default validates structure (type, nullability, required fields) but not semantics (is this string a valid ISO 3166-2 code?). The fix is field-level validators (<code>@validator</code> / <code>@field_validator</code>) that enforce semantic constraints: check against an enum of valid state codes, validate string length and pattern, and check cross-field consistency. This combination — structural + semantic validation — is what's needed for production extraction pipelines. Few-shot examples help calibration but don't catch all format variations.",
+    "background": "Pydantic provides two levels of validation: <em>structural</em> (type checking, required fields, nullability — what the schema declares) and <em>semantic</em> (domain validity — is this string actually a valid ISO 3166-2 code?). Production extraction pipelines need both. Field-level validators (<code>@validator</code>) add semantic checks: enum membership (against a list of valid codes), format patterns (regex matching), range constraints (numeric bounds), and cross-field consistency rules. Pydantic also generates the JSON Schema used in the <code>tool_use</code> API, making it the natural choice for structuring both validation and schema generation.",
+    "refs": [
+      {
+        "label": "Tool use — JSON schemas",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      },
+      {
+        "label": "Structured output patterns",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "domain": "Schema Design & Extraction",
+    "text": "You are extracting product listings from unstructured e-commerce descriptions. Some listings contain multiple prices (original, sale, bulk). Which schema pattern best ensures Claude returns <em>all</em> price variants without hallucinating missing ones?",
+    "pattern": "Polymorphic Array Extraction",
+    "explanation": "The correct answer uses a typed array of objects with an enum-constrained price_type, which accommodates variable cardinality without forcing hallucinated values for absent fields. Distractor 1 fails because required fields for all price types force Claude to hallucinate values when a price variant doesn't exist. Distractor 2 loses structured multi-price data. Distractor 3 with dynamic keys breaks downstream parsing and provides no schema validation.",
+    "background": "When extracting variable-length structured data, arrays of typed objects outperform fixed flat fields. Enum-constrained type discriminators keep outputs parseable while an explicit grounding instruction ('only populate what is stated') reduces hallucination of absent data.",
+    "refs": [
+      {
+        "label": "Structured Outputs — Claude API Docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+      },
+      {
+        "label": "Tool Use with Claude",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ],
+    "options": [
+      "Use a single price field of type number and append a free-text notes field where Claude can describe any additional prices.",
+      "Define separate top-level fields for original_price, sale_price, and bulk_price, each marked required, and let Claude fill nulls for missing values.",
+      "Define prices as a dictionary with dynamic keys so Claude can invent descriptive key names for each price type it finds.",
+      "Define prices as an array of objects with required fields for price_type (enum) and amount, plus an optional currency field, and instruct Claude to only populate entries explicitly stated in the source text."
+    ],
+    "answer": 3
+  },
+  {
+    "id": 12,
+    "domain": "Error Handling & Validation",
+    "text": "Your extraction pipeline uses Claude to parse invoices into JSON. Occasionally, the model returns a valid JSON structure but populates a <code>date</code> field with a value like <code>\"next Tuesday\"</code> instead of an ISO 8601 date. What is the most production-appropriate validation strategy?",
+    "pattern": "Post-Extraction Semantic Validation Loop",
+    "explanation": "The correct answer applies defense-in-depth: structural parsing plus semantic checks, with a retry/correction loop. Distractor 1 is wrong because temperature=0 reduces randomness but does not guarantee format compliance. Distractor 2 fails because JSON Schema type: string accepts any string, including 'next Tuesday'. Distractor 3 is insufficient for production — prompt instructions alone cannot guarantee format compliance at scale.",
+    "background": "Structural validation (is it valid JSON?) and semantic validation (do field values conform to domain rules?) are distinct layers. Production extraction pipelines need both. When semantic validation fails, a targeted correction prompt that includes the specific violation gives Claude the best chance of self-correcting.",
+    "refs": [
+      {
+        "label": "Structured Outputs — Claude API Docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+      },
+      {
+        "label": "Strengthen Guardrails",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/strengthen-guardrails"
+      }
+    ],
+    "options": [
+      "Rely on Claude's system prompt to state 'always use ISO 8601' — no additional validation is needed in production.",
+      "Apply a post-extraction semantic validation layer that checks field values against format regexes and domain constraints, then routes failures back through a correction prompt with the specific error.",
+      "Increase the temperature to 0 so Claude never produces informal date formats.",
+      "Add a JSON Schema with type: string for the date field, which will ensure only ISO dates are returned."
+    ],
+    "answer": 1
+  },
+  {
+    "id": 13,
+    "domain": "Schema Design & Extraction",
+    "text": "You need to extract entities from legal contracts where a single entity (e.g., a company) can appear in multiple roles (buyer, guarantor, licensee). Which schema design correctly models this without data duplication?",
+    "pattern": "Normalized Entity-Role Extraction",
+    "explanation": "The correct answer uses a normalized design with entity IDs and a separate roles junction, preventing duplication and enabling clean downstream joins. Distractor 1 duplicates entity data, creating consistency risks. Distractor 2 uses a comma-separated string, which is an anti-pattern that breaks structured parsing. Distractor 3 defers deduplication to post-processing, which is fragile when entity names have minor variations.",
+    "background": "When entities can occupy multiple roles in a document, a normalized extraction schema (entities + roles junction) mirrors relational data modeling. This prevents Claude from having to repeat entity attributes and makes downstream validation and storage straightforward.",
+    "refs": [
+      {
+        "label": "Structured Outputs — Claude API Docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+      }
+    ],
+    "options": [
+      "Use a single flat array where each object has the entity name and a comma-separated string of roles.",
+      "Create separate arrays for buyers, guarantors, and licensees, duplicating entity details in each array as needed.",
+      "Define an entities array with unique IDs and a separate roles array where each entry references an entity ID and a role enum value.",
+      "Define one entity object per role, using the entity name as the deduplication key in post-processing."
+    ],
+    "answer": 2
+  },
+  {
+    "id": 14,
+    "domain": "Compliance & Human-in-the-Loop",
+    "text": "Your extraction pipeline processes medical records and must redact PII before the data reaches any downstream system. According to MCP architecture security principles, where should PII redaction occur?",
+    "pattern": "Client-Layer PII Interception",
+    "explanation": "The correct answer aligns with MCP security principles: PII can be intercepted and tokenized by the MCP client before model exposure. Distractor 1 is wrong because the Host/Client enforces security boundaries, not the server alone. Distractor 2 relies on prompt compliance, which is insufficient for PII compliance. Distractor 3 is too late — PII has already been exposed to the model and intermediate systems.",
+    "background": "MCP architecture places security enforcement at the Host and Client layers. PII must be intercepted before reaching the model to comply with data protection regulations. The client can tokenize sensitive fields, replacing them with opaque tokens that are reversed only in authorized downstream systems.",
+    "refs": [
+      {
+        "label": "MCP Architecture — Security",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      },
+      {
+        "label": "Strengthen Guardrails",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/strengthen-guardrails"
+      }
+    ],
+    "options": [
+      "In the MCP server, since servers are responsible for all security enforcement in the MCP architecture.",
+      "In the downstream database layer, applying redaction rules on write to the final storage system.",
+      "In the model's system prompt, instructing Claude to omit PII from its structured output.",
+      "At the MCP client layer, intercepting and tokenizing PII before it is exposed to the model or passed downstream."
+    ],
+    "answer": 3
+  },
+  {
+    "id": 15,
+    "domain": "Schema Design & Extraction",
+    "text": "You are designing an extraction schema for research papers and need Claude to return a <code>methodology</code> field that can be one of several structured sub-types (e.g., clinical trial, survey, meta-analysis), each with different required fields. What is the best schema approach?",
+    "pattern": "Discriminated Union Extraction",
+    "explanation": "Discriminated unions use a type enum as a discriminator, enabling conditional validation of sub-fields per type. This is the standard pattern for polymorphic structured output. Distractor 1 (flat optional fields) loses type safety and makes it ambiguous which fields apply. Distractor 2 discards structure entirely. Distractor 3 wastes tokens and requires methodology pre-classification.",
+    "background": "Discriminated unions (tagged unions) are the preferred way to handle extraction targets with multiple possible structures. The discriminator field tells both Claude and downstream validators which set of fields to expect, enabling precise validation per variant.",
+    "refs": [
+      {
+        "label": "Structured Outputs — Claude API Docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+      }
+    ],
+    "options": [
+      "Use a discriminated union with a required type field (enum) and conditionally required sub-fields specific to each methodology type.",
+      "Create separate top-level extraction schemas and run Claude once per methodology type, selecting the best result.",
+      "Use a free-text string field for methodology and parse the sub-structure in post-processing with regex.",
+      "Define a single flat object with all possible fields from every methodology type marked as optional."
+    ],
+    "answer": 0
+  },
+  {
+    "id": 16,
+    "domain": "Error Handling & Validation",
+    "text": "Your extraction pipeline occasionally receives Claude responses where <code>stop_reason</code> is <code>\"max_tokens\"</code> instead of <code>\"end_turn\"</code>. The resulting JSON is truncated and unparseable. What is the correct production handling pattern?",
+    "pattern": "Truncation Detection via Stop Reason",
+    "explanation": "The correct answer checks stop_reason as a first-class signal. max_tokens indicates output was cut off, so the pipeline should retry with higher limits or continue from the truncation. Distractor 1 silently drops data, which is unacceptable in production. Distractor 2 wastes tokens and budget on every request. Distractor 3 produces structurally valid but semantically corrupt JSON.",
+    "background": "Claude's API returns a stop_reason (or stop_reason) field indicating why generation stopped. 'end_turn' means natural completion; 'max_tokens' means the output was truncated. Production pipelines must inspect this field before trusting the output, especially for structured extraction where partial JSON is unusable.",
+    "refs": [
+      {
+        "label": "Handling Stop Reasons",
+        "url": "https://docs.anthropic.com/en/api/handling-stop-reasons"
+      },
+      {
+        "label": "Structured Outputs — Claude API Docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+      }
+    ],
+    "options": [
+      "Append a closing brace to the truncated response to make it valid JSON, then parse normally.",
+      "Set max_tokens to the maximum allowed value for all requests to ensure truncation never occurs.",
+      "Check stop_reason before parsing; if it is max_tokens, either increase max_tokens and retry, or use a continuation prompt that asks Claude to complete the JSON from the truncation point.",
+      "Wrap the JSON.parse call in a try/catch and return a null result on failure — truncation is rare enough to ignore."
+    ],
+    "answer": 2
+  },
+  {
+    "id": 17,
+    "domain": "Schema Design & Extraction",
+    "text": "You are extracting structured data from 50-page financial reports. To manage context window limits, you split the document into overlapping chunks and extract from each. What is the primary risk of this approach, and how should you mitigate it?",
+    "pattern": "Chunk-Overlap Deduplication",
+    "explanation": "The correct answer identifies the real risk: overlap regions cause the same entity to be extracted twice. Schema-level IDs plus post-extraction dedup is the standard mitigation. Distractor 1 is wrong — Claude doesn't refuse partial text. Distractor 2 misidentifies the risk; temperature doesn't address duplication. Distractor 3 removes overlap, which risks missing entities that span chunk boundaries.",
+    "background": "Chunked extraction is necessary for documents exceeding context limits. Overlapping chunks ensure entities at chunk boundaries aren't missed, but they introduce duplicate extractions. The standard mitigation is to design schemas with natural keys or generated IDs and apply deterministic deduplication downstream.",
+    "refs": [
+      {
+        "label": "Context Windows",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows"
+      },
+      {
+        "label": "Structured Outputs — Claude API Docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+      }
+    ],
+    "options": [
+      "Claude will refuse to process chunks that lack full document context; mitigate by including the table of contents in every chunk.",
+      "The overlapping text doubles the total token cost; mitigate by removing all overlap and using strictly non-overlapping chunks.",
+      "Duplicate entities extracted from overlapping regions; mitigate by including unique identifiers in the schema and running a post-extraction deduplication pass that merges records by ID or key fields.",
+      "Overlapping chunks cause Claude to hallucinate contradictions; mitigate by setting temperature to 0 for all chunk extractions."
+    ],
+    "answer": 2
+  },
+  {
+    "id": 18,
+    "domain": "Compliance & Human-in-the-Loop",
+    "text": "Your extraction system processes insurance claims and must flag cases where Claude's extracted diagnosis code does not match any entry in your approved ICD-10 codebook. What is the recommended compliance pattern?",
+    "pattern": "Codebook Validation with Human Routing",
+    "explanation": "The correct answer applies app-layer validation against the authoritative codebook and routes failures to humans — the standard compliance pattern. Distractor 1 is impractical (the ICD-10 codebook has ~70,000 codes) and doesn't guarantee selection. Distractor 2 relies solely on prompt compliance, insufficient for regulated domains. Distractor 3 checks format only, not semantic validity — a well-formatted code can still be non-existent.",
+    "background": "In regulated extraction domains, model outputs must be validated against authoritative reference data (codebooks, registries). Format validation alone is insufficient — semantic validation against the actual reference set is required. Non-matching extractions must be escalated to human reviewers to maintain compliance.",
+    "refs": [
+      {
+        "label": "Strengthen Guardrails",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/strengthen-guardrails"
+      },
+      {
+        "label": "Reduce Hallucinations",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/reduce-hallucinations"
+      }
+    ],
+    "options": [
+      "Ask Claude to self-validate by adding an instruction: 'Only output valid ICD-10 codes' — no further checks needed.",
+      "Validate the extracted code against the ICD-10 codebook in an application-layer post-check, and route non-matching codes to a human reviewer queue with the source text attached.",
+      "Use a regex to check that the extracted code matches the ICD-10 format (letter + digits) and accept it if the format is valid.",
+      "Include the entire ICD-10 codebook in the system prompt so Claude can only select valid codes."
+    ],
+    "answer": 1
+  },
+  {
+    "id": 19,
+    "domain": "Error Handling & Validation",
+    "text": "Your extraction pipeline uses tool use (function calling) to enforce JSON schema compliance. Claude returns a response with <code>stop_reason: \"tool_use\"</code>, but the <code>input</code> object in the tool use block contains a field value that violates a business rule (e.g., negative quantity). What does this indicate about the API's built-in validation?",
+    "pattern": "Tool Use Schema vs Business Validation",
+    "explanation": "The correct answer identifies the boundary: tool use enforces structural schema (correct types, required fields present) but cannot enforce domain-specific business rules like 'quantity must be positive.' Distractor 1 overstates API capability. Distractor 2 misreads stop_reason — tool_use means Claude wants to call a tool, not that validation failed. Distractor 3 understates API capability — tool use does enforce structural schema.",
+    "background": "Claude's tool use feature enforces JSON schema constraints (types, required fields, enum values) on the tool input. However, business rules that go beyond schema (e.g., cross-field consistency, value ranges not expressible in JSON Schema) must be validated in the application layer. stop_reason: tool_use simply means Claude is invoking a tool.",
+    "refs": [
+      {
+        "label": "Tool Use with Claude",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      },
+      {
+        "label": "Handling Stop Reasons",
+        "url": "https://docs.anthropic.com/en/api/handling-stop-reasons"
+      }
+    ],
+    "options": [
+      "The API enforces structural JSON schema conformance (types, required fields) but does not enforce semantic business rules — application-layer validation is still required.",
+      "The stop_reason of tool_use indicates the output failed schema validation and should be retried automatically.",
+      "The API fully validates all field values including business constraints expressed in the tool description, so this scenario cannot occur.",
+      "Tool use mode bypasses all schema validation, so the application must validate both structure and types manually."
+    ],
+    "answer": 0
+  },
+  {
+    "id": 20,
+    "domain": "Schema Design & Extraction",
+    "text": "You need Claude to extract a <code>source_quote</code> field containing the exact verbatim text from the input document that supports each extracted fact. Which prompt engineering technique most reliably ensures the quote is a true substring of the source?",
+    "pattern": "Verbatim Quote Verification",
+    "explanation": "The correct answer combines prompt instruction with programmatic substring verification — the only way to guarantee fidelity in production. Distractor 1 is backwards; high temperature increases paraphrasing risk. Distractor 2 is unreliable because Claude cannot accurately count character offsets in tokenized text. Distractor 3 overstates citation guarantees; while citations improve grounding, programmatic verification is still needed for strict verbatim requirements.",
+    "background": "Extracting verbatim quotes is a common grounding technique. However, Claude may paraphrase or slightly alter text even when instructed to quote exactly. The production-safe pattern is to extract the quote text and programmatically verify it as a substring of the source, since string matching is deterministic and trivial to implement.",
+    "refs": [
+      {
+        "label": "Citations — Claude API Docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/citations"
+      },
+      {
+        "label": "Reduce Hallucinations",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/reduce-hallucinations"
+      }
+    ],
+    "options": [
+      "Rely on Claude's citation feature alone without any downstream verification, since citations are guaranteed verbatim.",
+      "Instruct Claude to return the exact quote and then programmatically verify that each source_quote is a substring of the input document, flagging mismatches for review.",
+      "Use a high temperature (e.g., 0.9) so Claude explores more of the source text when selecting quotes.",
+      "Ask Claude to return the character offset and length of the quote instead of the text itself, since offsets are always accurate."
+    ],
+    "answer": 1
+  }
+]

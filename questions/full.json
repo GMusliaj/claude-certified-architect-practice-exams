@@ -1,0 +1,1899 @@
+[
+  {
+    "id": 1,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A multi-step document analysis agent processes 200-page PDFs. The API returns <code>stop_reason: \"max_tokens\"</code> with a partial <code>text</code> block mid-sentence. The developer currently treats this identically to <code>stop_reason: \"end_turn\"</code> and moves on. What is the correct handling?",
+    "options": [
+      "Restart the entire document analysis from scratch with a higher <code>max_tokens</code> value",
+      "Treat it as a fatal error — partial responses cannot be safely continued",
+      "Increase the system prompt's verbosity limit and resubmit the original request",
+      "Append the partial <code>assistant</code> message to history as-is, then send a continuation request with no new user content so the model resumes from where it stopped"
+    ],
+    "answer": 3,
+    "pattern": "stop_reason: max_tokens Continuation",
+    "explanation": "When <code>stop_reason: \"max_tokens\"</code> occurs, the response was truncated — not completed. The correct pattern is to append the partial <code>assistant</code> turn to history and send a new request with no additional user content, signaling the model to continue. Restarting discards all work done. Treating it as fatal causes unnecessary failures. System prompt verbosity has no effect on truncation.",
+    "background": "Claude API responses include four possible <code>stop_reason</code> values: <code>end_turn</code> (model finished voluntarily), <code>tool_use</code> (tool call requested), <code>max_tokens</code> (response truncated at limit), and <code>stop_sequence</code>. Only <code>end_turn</code> means the model actually finished its task. <code>max_tokens</code> requires explicit continuation handling.",
+    "refs": [
+      {
+        "label": "Messages API stop_reason",
+        "url": "https://docs.anthropic.com/en/api/messages"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A research coordinator delegates a competitive analysis to a <code>market_research</code> subagent using the <code>Task</code> tool. The coordinator already retrieved the target company profile and three competitor reports. The subagent returns a generic analysis that ignores all retrieved data. What is the root cause?",
+    "options": [
+      "The <code>Task</code> tool automatically shares the coordinator's full conversation history with subagents",
+      "The coordinator must call <code>set_shared_context()</code> before invoking any subagent",
+      "Subagents inherit only the <code>system_prompt</code> content, not tool results from the coordinator",
+      "Subagents run in isolated contexts — the coordinator must explicitly include all relevant data in the <code>Task</code> prompt"
+    ],
+    "answer": 3,
+    "pattern": "Explicit Subagent Context Passing",
+    "explanation": "Subagents receive only what is explicitly passed in their <code>Task</code> prompt. They do not inherit the coordinator's conversation history, tool results, or retrieved data. The fix is to include the company profile and competitor reports directly in the <code>Task</code> prompt. Options A and B are incorrect — there is no automatic context sharing. Option D describes a non-existent API method.",
+    "background": "In the Claude Agent SDK, each subagent operates in a fully isolated context. The coordinator-subagent architecture is hub-and-spoke: all data flows through explicit delegation. This isolation is intentional — it prevents context bleed, limits token costs, and enables parallel execution. It means the coordinator is fully responsible for passing the right context to each subagent.",
+    "refs": [
+      {
+        "label": "Multi-agent orchestration",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A code review subagent is defined with <code>allowed_tools: [\"Read\", \"Grep\", \"Glob\", \"Write\", \"Bash\"]</code>. During a security audit, the agent uses <code>Bash</code> to run <code>git push</code> unexpectedly after making edits. What is the minimal and most reliable fix?",
+    "options": [
+      "Set <code>tool_choice: {\"type\": \"auto\"}</code> to prevent unsolicited tool use",
+      "Add a PreToolUse hook that logs all Bash commands for post-hoc review",
+      "Add a system prompt instruction: \"Never run git commands or push code\"",
+      "Remove <code>Write</code> and <code>Bash</code> from <code>allowed_tools</code> — a review agent only needs <code>Read</code>, <code>Grep</code>, and <code>Glob</code>"
+    ],
+    "answer": 3,
+    "pattern": "allowed_tools — Principle of Least Privilege",
+    "explanation": "The correct fix is to remove capabilities the agent doesn't need. A read-only review agent has no legitimate use for <code>Write</code> or <code>Bash</code>. Removing them from <code>allowed_tools</code> makes unwanted behavior architecturally impossible, not just probabilistically discouraged. System prompt instructions (A) are probabilistic and can fail. <code>tool_choice: auto</code> (C) doesn't restrict which tools are available. Logging (D) detects but doesn't prevent the behavior.",
+    "background": "The principle of least privilege applied to AI agents means: give each agent only the tools needed for its specific role. Over-provisioning tools increases the blast radius of mistakes and reduces reliability of tool selection. An <code>AgentDefinition</code>'s <code>allowed_tools</code> list is the primary mechanism for capability scoping.",
+    "refs": [
+      {
+        "label": "Defining agents with AgentDefinition",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "An engineer is building a pipeline to investigate production incidents. Each incident may involve different systems, and the full scope of investigation only becomes clear after examining the first error log. Which decomposition strategy is correct?",
+    "options": [
+      "Parallel subagent spawning — run all possible investigation tools simultaneously to cover every scenario",
+      "Fixed pipeline (prompt chaining) — define all investigation steps upfront for maximum predictability",
+      "Single-agent loop — let the model use tools freely with no explicit decomposition",
+      "Dynamic adaptive decomposition — generate investigation subtasks based on findings from each step"
+    ],
+    "answer": 3,
+    "pattern": "Dynamic vs Fixed Pipeline Selection",
+    "explanation": "When scope is unknown upfront and each finding determines the next step, dynamic adaptive decomposition is correct. Fixed pipelines (A) work only when all steps are predictable in advance. Parallel spawning (C) wastes resources on irrelevant paths and may cause conflicting actions. A single agent loop (D) is appropriate for simple tasks but lacks the coordination structure needed for multi-system incident investigation.",
+    "background": "Two primary decomposition strategies exist: fixed pipelines (prompt chaining) for predictable, sequential workflows where all steps are known, and dynamic adaptive decomposition where subtasks are generated based on intermediate results. Incident investigation, research, and open-ended exploration are canonical use cases for adaptive decomposition because the full scope only emerges during execution.",
+    "refs": [
+      {
+        "label": "Agentic workflows and task decomposition",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "An architect wants to compare two refactoring approaches — microservice extraction vs in-place simplification — starting from a codebase analysis that took 45 minutes to complete. What is the correct approach?",
+    "options": [
+      "Start two completely new sessions from scratch so each begins with clean context",
+      "Use <code>fork_session</code> to create two independent branches from the completed analysis — each branch explores its approach without contaminating the other",
+      "Complete Approach A, save a summary to a file, then start Approach B with the summary as context",
+      "Run both approaches in the same session, clearly labeling \"Approach A:\" and \"Approach B:\" sections"
+    ],
+    "answer": 1,
+    "pattern": "fork_session for Parallel Exploration",
+    "explanation": "<code>fork_session</code> is purpose-built for this: both branches inherit the 45 minutes of completed analysis and then diverge independently. Running both in the same session (A) causes context contamination — findings from Approach A influence Approach B. Starting fresh (B) wastes the completed analysis. Sequential approaches (D) are slower and the summary loses nuance from the original analysis.",
+    "background": "<code>fork_session</code> creates independent session branches from a shared checkpoint. Both branches have identical context up to the fork point, then evolve independently. This is the correct pattern for A/B exploration, comparing implementation strategies, or testing hypotheses in parallel without cross-contamination. It's the agentic equivalent of a git branch.",
+    "refs": [
+      {
+        "label": "Session management and forking",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A 12-subagent research pipeline crashes at subagent 7 after 90 minutes. No intermediate state was persisted. The team must restart entirely from scratch. What architectural change prevents this in future runs?",
+    "options": [
+      "Wrap the coordinator in a try/catch and log the final error to a monitoring service",
+      "Set <code>max_retries: 3</code> on each <code>Task</code> invocation to auto-recover from transient crashes",
+      "Each subagent writes its findings to a structured <code>agent-state/{name}.json</code> file upon successful completion; on restart, the coordinator reads these files and skips already-completed agents",
+      "Use a single shared in-memory variable in the coordinator to track completed subagent IDs"
+    ],
+    "answer": 2,
+    "pattern": "Structured State Persistence for Crash Recovery",
+    "explanation": "Durable state files allow partial restarts: on re-run, the coordinator checks which <code>agent-state/*.json</code> files exist and skips those subagents. Logging (A) captures the error but enables no recovery — you still restart from scratch. In-memory state (C) is lost on crash by definition. Retry logic (D) handles transient failures but not coordinator crashes that lose all progress.",
+    "background": "Production multi-agent pipelines must be designed for failure recovery. Each subagent should persist its status and findings to a durable store (file, database, or object storage) as soon as it completes. This transforms a total restart into a partial restart from the last checkpoint. The state file pattern also enables observability: the coordinator knows exactly which agents completed and with what results.",
+    "refs": [
+      {
+        "label": "Building reliable agentic systems",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A coordinator spawns 8 parallel subagents, each returning detailed 15,000-token reports. The coordinator's synthesis step fails with context limit errors. What is the correct fix?",
+    "options": [
+      "Run the synthesis in a separate model with a larger context window",
+      "Increase the coordinator's <code>max_tokens</code> parameter to 200,000",
+      "Instruct each subagent in its <code>Task</code> prompt to return a structured JSON summary capped at 1,500 tokens instead of the full report",
+      "Switch to sequential subagent execution so reports arrive one at a time"
+    ],
+    "answer": 2,
+    "pattern": "Subagent Token Budget Enforcement",
+    "explanation": "The root cause is that 8 × 15,000 = 120,000 tokens of subagent output overwhelms the coordinator's context. The fix is to constrain subagent output at the source: each subagent's <code>Task</code> prompt should specify a token budget and a structured format (e.g., JSON with key findings). Increasing <code>max_tokens</code> (A) controls generation length, not context consumption. Sequential execution (B) doesn't reduce total token volume. A different model (D) is an expensive workaround that doesn't fix the architectural problem.",
+    "background": "Context window management in multi-agent systems is a first-class architectural concern. When coordinators aggregate results from many subagents, the combined context can easily exceed limits. The solution is to design subagents to output structured summaries rather than full reports — the coordinator receives decision-relevant information, not raw data. This also improves synthesis quality by reducing noise.",
+    "refs": [
+      {
+        "label": "Context window management",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A developer productivity agent generates database migration SQL. On 3 of the last 10 runs, the SQL contained syntax errors discovered only at execution time. Which architecture catches these before they reach production?",
+    "options": [
+      "Retry generation 3 times and use the most common output by majority vote",
+      "Add a system prompt instruction: \"Double-check your SQL for syntax errors before responding\"",
+      "Ask the model to rate its own confidence in the SQL; proceed only if confidence > 8/10",
+      "Run the generated SQL through a syntax validator immediately after generation; on failure, inject the error back into the prompt and regenerate before returning to the user"
+    ],
+    "answer": 3,
+    "pattern": "Plan-Implement-Verify Chaining",
+    "explanation": "The correct pattern is an automated validation step that creates a feedback loop: generate → validate → on error, regenerate with the specific error injected. This catches syntax errors deterministically. System prompt instructions (A) are probabilistic and the model already makes such errors despite best efforts. Self-confidence ratings (C) are unreliable — models can be confidently wrong. Majority voting (D) just picks the most common error, not the correct output.",
+    "background": "Plan-Implement-Verify is a three-step chaining pattern for code generation tasks: generate the artifact, validate it with a deterministic tool (parser, linter, test runner), and if validation fails, feed the specific error back to regenerate. The validation step converts a probabilistic generation problem into a correctable loop. The key is using actual validation tools, not the model's self-assessment.",
+    "refs": [
+      {
+        "label": "Agentic loop patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A coordinator spawns a <code>legal_review</code> subagent and then a <code>financial_review</code> subagent for the same contract. The financial subagent correctly flags a payment clause. The legal subagent, invoked second, also flags the same clause even though it was given a different <code>Task</code> prompt with no financial context. How should this be interpreted?",
+    "options": [
+      "Unexpected — this indicates the coordinator accidentally included the financial report in the legal subagent's <code>Task</code> prompt",
+      "Expected — the legal subagent accessed the financial report via a shared vector store that was auto-populated",
+      "Expected — the <code>Task</code> tool automatically broadcasts completed subagent results to each subsequent subagent",
+      "Expected — subagents share a read-only view of sibling outputs by default"
+    ],
+    "answer": 0,
+    "pattern": "Subagent Context Isolation",
+    "explanation": "Subagents are completely isolated — they share no context with siblings by default. There is no automatic broadcast (C) or auto-populated vector store (D). If the legal subagent has context about the financial findings, the only explanation is that the coordinator's <code>Task</code> prompt for the legal subagent inadvertently contained that information. Option A is false — sibling context sharing requires explicit implementation.",
+    "background": "Subagent isolation is a fundamental design property of the Claude Agent SDK. Each subagent starts with only what is explicitly provided in its <code>Task</code> prompt. This isolation prevents unintended information leakage, enables safe parallelization, and keeps context costs predictable. When debugging unexpected behavior in subagents, the first question is always: what was in its <code>Task</code> prompt?",
+    "refs": [
+      {
+        "label": "Multi-agent architecture",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A research coordinator receives this from a web-search subagent: <code>{\"status\": \"partial_failure\", \"failure_type\": \"timeout\", \"partial_results\": [{\"title\": \"AI market 2024\"}], \"coverage_impact\": \"Missing: Asia-Pacific data\"}</code>. What should the coordinator do?",
+    "options": [
+      "Retry the exact same subagent call immediately with no changes",
+      "Abort the entire research pipeline and return an error to the user",
+      "Replace the missing data with a synthesized estimate based on other regional results",
+      "Use the partial results for available coverage and explicitly annotate the gap: \"Asia-Pacific: NOT COVERED — search timeout\" in the final report"
+    ],
+    "answer": 3,
+    "pattern": "Coordinator Partial Failure Recovery",
+    "explanation": "The structured error response gives the coordinator everything it needs for intelligent recovery: partial results to work with, and a specific coverage gap to annotate. Aborting (A) throws away the partial results unnecessarily. Retrying immediately (B) will likely timeout again. Synthesizing estimates (D) is fabrication — the report would contain invented data without disclosure.",
+    "background": "Production multi-agent systems must design for partial failure as the normal case, not the exception. Structured error responses enable intelligent recovery by separating what was retrieved from what was not. The coordinator's job is not to achieve perfection but to maximize coverage and be transparent about gaps. Explicit coverage annotations are far more useful to downstream consumers than silent omissions or fabricated data.",
+    "refs": [
+      {
+        "label": "Error handling in multi-agent systems",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A customer support agent uses a <code>process_refund</code> tool. The team needs two behaviors: (1) block any refund above $500 before it executes, and (2) normalize the returned <code>transaction_id</code> from <code>TXN-12345</code> to <code>txn_12345</code> for downstream logging. Which hooks implement each requirement correctly?",
+    "options": [
+      "Both use a PostToolUse hook — one cancels the transaction retroactively, one normalizes the ID",
+      "Both use a PreToolUse hook — inspect the amount in the input and the ID in the pre-flight response",
+      "Use a system prompt for the refund limit and a PostToolUse hook for ID normalization",
+      "PreToolUse blocks the refund before execution; PostToolUse normalizes the <code>transaction_id</code> in the tool result"
+    ],
+    "answer": 3,
+    "pattern": "PreToolUse vs PostToolUse Hook Selection",
+    "explanation": "PreToolUse fires before tool execution — it can inspect inputs and block the call before any side effect occurs. This is the correct hook for enforcement (refund threshold). PostToolUse fires after the tool returns its result — it can modify the output before the model sees it. This is correct for normalization (transaction ID format). Option A is wrong because PostToolUse cannot prevent a transaction that already executed. Option C is wrong because PreToolUse cannot inspect tool output (the tool hasn't run yet). Option D relies on a probabilistic system prompt for a financial enforcement requirement.",
+    "background": "The Claude Agent SDK provides two hook types for tool call interception. PreToolUse intercepts outgoing tool calls before execution — it sees the tool name and input parameters and can block the call. PostToolUse intercepts returning tool results before the model processes them — it sees the raw output and can normalize, filter, or augment it. Matching the hook type to the requirement is critical: enforcement requires PreToolUse, transformation requires PostToolUse.",
+    "refs": [
+      {
+        "label": "Agent SDK hooks",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A team is automating weekly financial reports: always extract revenue → compute margins → compare to prior quarter → generate executive summary. These steps never vary. Which decomposition strategy is appropriate?",
+    "options": [
+      "Fixed pipeline (prompt chaining) — the steps are always identical and sequential; define them explicitly",
+      "Parallel multi-agent execution — all four steps run simultaneously for maximum speed",
+      "Single agentic loop — the model uses tools freely until it decides the report is complete",
+      "Dynamic adaptive decomposition — let the model determine which steps are needed based on the data"
+    ],
+    "answer": 0,
+    "pattern": "Fixed Pipeline for Predictable Workflows",
+    "explanation": "When all steps are known in advance, always sequential, and never conditional, a fixed pipeline is the right choice. It's predictable, debuggable, and auditable. Dynamic decomposition (A) adds unnecessary complexity for a deterministic workflow. A single agent loop (B) provides no structure and may deviate from the required sequence. Parallel execution (C) is impossible here since each step depends on the previous one's output.",
+    "background": "Choosing between fixed and adaptive decomposition is one of the key architectural decisions in agentic system design. The decision criterion is scope certainty: if you can enumerate all steps and their order at design time, use a fixed pipeline. If scope emerges during execution, use adaptive decomposition. Over-engineering a known workflow with dynamic decomposition adds fragility without benefit.",
+    "refs": [
+      {
+        "label": "Prompt chaining and workflow design",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A research coordinator must query 8 independent industry databases. Current implementation: sequential subagent calls, total runtime 160 seconds. Each query is fully independent. What implementation achieves ~20 second runtime?",
+    "options": [
+      "Invoke all 8 subagents via the <code>Task</code> tool in a single coordinator response before awaiting any results — they execute concurrently",
+      "Use the Batch API to send all 8 queries as a single batch request",
+      "Use <code>tool_choice: {\"type\": \"any\"}</code> on each subagent to enable parallel execution",
+      "Spawn one subagent and instruct it to query all 8 databases sequentially in its own session"
+    ],
+    "answer": 0,
+    "pattern": "Parallel Subagent Spawning",
+    "explanation": "Multiple <code>Task</code> tool calls in a single coordinator response trigger concurrent subagent execution — they all run in parallel. Total time becomes the duration of the slowest subagent (~20s), not the sum (~160s). The Batch API (A) is for single-step async inference, not multi-step subagent orchestration. <code>tool_choice: any</code> (C) doesn't create parallelism. A single subagent querying sequentially (D) provides no speedup.",
+    "background": "Parallel subagent execution is one of the most powerful patterns in multi-agent architecture. When subtasks are truly independent (no data dependencies between them), spawning them in parallel reduces wall-clock time from O(n) to O(1) relative to the number of subtasks. The coordinator issues multiple <code>Task</code> calls in a single turn; the SDK executes them concurrently and returns all results before the coordinator's next turn.",
+    "refs": [
+      {
+        "label": "Parallel subagent execution",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A coordinator agent is defined with <code>allowed_tools: [\"Read\", \"Grep\", \"Glob\", \"WebSearch\"]</code>. When it tries to delegate work to a subagent, delegation silently fails and the coordinator attempts to do all the work itself. What is the cause?",
+    "options": [
+      "The <code>Task</code> tool is only available to root-level agents, not nested coordinators",
+      "The coordinator's <code>allowed_tools</code> does not include <code>\"Task\"</code> — without it, the coordinator cannot invoke subagents",
+      "Subagent spawning requires <code>tool_choice: {\"type\": \"any\"}</code> to be set on the coordinator",
+      "Subagents must be pre-registered with the coordinator in a registry before they can be spawned"
+    ],
+    "answer": 1,
+    "pattern": "Task Tool Must Be in allowedTools",
+    "explanation": "The <code>Task</code> tool is how the Claude Agent SDK enables subagent delegation. Without it in <code>allowed_tools</code>, the coordinator has no mechanism to spawn subagents and falls back to doing the work itself. There is no pre-registration requirement (A). The <code>Task</code> tool is available at any orchestration level (C). <code>tool_choice</code> settings affect selection behavior, not tool availability (D).",
+    "background": "In the Claude Agent SDK, <code>allowed_tools</code> defines the complete set of capabilities an agent has access to. The <code>\"Task\"</code> tool is the delegation primitive — it enables an agent to spawn subagents. Forgetting to include it is a common configuration mistake that results in the coordinator silently handling all work itself. Always include <code>\"Task\"</code> in coordinator agents' <code>allowed_tools</code>.",
+    "refs": [
+      {
+        "label": "AgentDefinition and allowedTools",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A multi-agent research system produces reports where some topics are completely missing because subagents timed out. Users are treating the silence as \"no findings\" rather than \"not investigated.\" What is the correct design?",
+    "options": [
+      "Set <code>max_retries: 5</code> on each subagent <code>Task</code> call to eliminate timeouts",
+      "Retry all failed subagents until they succeed before generating the final report",
+      "Add a confidence score to each section — users can infer gaps from low scores",
+      "The coordinator explicitly annotates each uncovered topic: \"Asia-Pacific Markets: NOT COVERED — search agent timed out\" rather than omitting the section"
+    ],
+    "answer": 3,
+    "pattern": "Explicit Coverage Gap Annotation",
+    "explanation": "Silent omissions are more dangerous than explicit gaps because readers cannot distinguish \"no findings\" from \"not investigated.\" Explicit annotations make coverage limitations visible and actionable. Indefinite retries (A) block report generation and don't resolve fundamental availability issues. Confidence scores (B) apply to the quality of found information, not to the existence of a gap. Aggressive retry limits (D) cause cascading delays without guaranteed resolution.",
+    "background": "In research and synthesis systems, coverage completeness is a first-class output dimension alongside accuracy. A report that is 100% accurate about the topics it covers but silently omits others creates a false sense of completeness. The correct pattern is to track which topics were assigned to which subagents and explicitly report both successes and failures in the final output. This transparency is essential for human oversight.",
+    "refs": [
+      {
+        "label": "Coverage and error propagation",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A procurement agent autonomously creates purchase orders up to $10,000. For orders above $10,000, the agent completes the full workflow and then sends a notification email to a human approver. Approvers are rejecting 23% of completed orders, requiring costly reversals. What is the correct fix?",
+    "options": [
+      "Run the order workflow on a 24-hour delay so approvers can cancel before execution",
+      "Lower the autonomous threshold to $5,000 so fewer large orders complete without review",
+      "Insert the human review checkpoint before the <code>create_purchase_order</code> tool call executes — intercept via PreToolUse hook and pause the workflow pending approval",
+      "Add a system prompt: \"For orders above $10,000, state REQUIRES APPROVAL in your response before proceeding\""
+    ],
+    "answer": 2,
+    "pattern": "Human-in-the-Loop Insertion Point",
+    "explanation": "The failure is architectural: human review happens after execution, making rejections reversals. Moving the checkpoint before execution (via PreToolUse) prevents orders from completing until approved. Lowering the threshold (A) shifts but doesn't fix the problem. System prompt instructions (B) are probabilistic and cannot guarantee the agent pauses. A 24-hour delay (D) doesn't prevent execution — it just delays it.",
+    "background": "The correct insertion point for human-in-the-loop controls is before irreversible actions, not after. PreToolUse hooks enable this by intercepting tool calls before they execute, allowing the system to pause, route to a human approver, and resume only upon explicit approval. This is the architectural standard for compliance-sensitive workflows: enforcement happens at the API level, not in the prompt.",
+    "refs": [
+      {
+        "label": "Human-in-the-loop and hooks",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "domain": "Tool Design & MCP Integration",
+    "text": "A <code>get_inventory</code> MCP tool returns <code>{\"isError\": true, \"errorCategory\": \"transient\", \"isRetryable\": true, \"message\": \"Warehouse API timeout\"}</code>. The agent immediately escalates to a human. Is this correct?",
+    "options": [
+      "No — the agent should return a cached result from the last successful <code>get_inventory</code> call",
+      "Yes — any tool error should trigger human escalation to prevent incorrect automated decisions",
+      "Yes — the agent cannot reliably distinguish transient from permanent errors at runtime",
+      "No — transient errors are retryable; the agent should retry with exponential backoff before escalating"
+    ],
+    "answer": 3,
+    "pattern": "MCP Error Category — Transient Recovery",
+    "explanation": "The structured error response explicitly states <code>errorCategory: transient</code> and <code>isRetryable: true</code>. Transient errors (timeouts, 503s) are resolved by retrying — immediate escalation wastes human attention on recoverable failures. Option A is wrong because not all errors warrant escalation. Option C is wrong because the error response provides explicit category information. Option D introduces stale data risk.",
+    "background": "Well-designed MCP tools return structured error responses that enable intelligent agent recovery. The key fields are: <code>errorCategory</code> (transient/validation/business/permission), <code>isRetryable</code> (boolean), and a human-readable <code>message</code>. Transient errors should trigger retry with backoff. Validation errors should trigger input correction. Business rule violations should trigger alternative workflows. Only permission errors or unresolvable failures should escalate to humans.",
+    "refs": [
+      {
+        "label": "MCP tool error handling",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "domain": "Tool Design & MCP Integration",
+    "text": "A data extraction pipeline must always return structured JSON, never free-form text. The prompt instructs the model to \"return a JSON object,\" but 4% of responses are plain English summaries. What API parameter eliminates this?",
+    "options": [
+      "Add <code>\"ALWAYS respond with JSON only\"</code> to the system prompt",
+      "Use <code>stop_sequences: [\"}\"]</code> to truncate responses after the closing brace",
+      "Set <code>tool_choice: {\"type\": \"any\"}</code> — this forces the model to call a tool on every response, eliminating free-text output",
+      "Set <code>temperature: 0</code> to make the model deterministic"
+    ],
+    "answer": 2,
+    "pattern": "tool_choice: any — Structured Output Guarantee",
+    "explanation": "<code>tool_choice: {\"type\": \"any\"}</code> is an API-level constraint that forces the model to call a tool on every response. Since tool calls always produce structured output, this eliminates free-text responses entirely. Temperature (A) affects output variation but not whether the model uses a tool. System prompt instructions (B) are what was already failing at 4%. Stop sequences (D) are fragile and would break on nested JSON.",
+    "background": "The <code>tool_choice</code> parameter has three modes: <code>auto</code> (model chooses tool or text), <code>any</code> (model must call some tool), and <code>{\"type\": \"tool\", \"name\": \"X\"}</code> (model must call a specific tool). <code>any</code> is the correct choice when you need guaranteed structured output but want the model to choose among multiple defined tools. It's a hard API-level constraint, not a probabilistic instruction.",
+    "refs": [
+      {
+        "label": "tool_choice parameter",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "domain": "Tool Design & MCP Integration",
+    "text": "An agent repeatedly calls <code>get_schema()</code>, <code>get_field_definitions()</code>, and <code>get_validation_rules()</code> at the start of every session, consuming 12,000 tokens in setup tool calls before doing any work. These values never change during a session. What MCP feature eliminates these redundant calls?",
+    "options": [
+      "Expose the schema, field definitions, and validation rules as MCP Resources — the agent subscribes once and references them directly without repeated tool calls",
+      "Cache the tool results in a global JavaScript variable initialized before the agent starts",
+      "Combine all three tools into a single <code>get_config()</code> tool to reduce call count to one",
+      "Set <code>tool_choice: {\"type\": \"none\"}</code> at session start to suppress tool calls during configuration"
+    ],
+    "answer": 0,
+    "pattern": "MCP Resources — Content Catalog",
+    "explanation": "MCP Resources are designed for stable, structured content that agents need to reference without performing tool calls. Exposing schemas and validation rules as Resources eliminates the per-session setup overhead entirely. Caching in a global variable (A) is a client-side workaround that requires custom code. Combining tools (C) reduces from 3 calls to 1 but doesn't eliminate them. <code>tool_choice: none</code> (D) would suppress all tool use, breaking the agent.",
+    "background": "MCP distinguishes between Tools (actions that do work and may have side effects) and Resources (static or slowly-changing content that agents can read without side effects). Use Resources for content the agent needs to know — schemas, documentation, reference data, templates. Resources reduce token consumption and simplify the agent's context by making stable information available as first-class references rather than tool results.",
+    "refs": [
+      {
+        "label": "MCP resources and tools",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/mcp"
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "domain": "Tool Design & MCP Integration",
+    "text": "A team's <code>.mcp.json</code> file is committed to a public GitHub repo containing: <code>\"env\": {\"GITHUB_TOKEN\": \"ghp_realtoken123\"}</code>. What is the vulnerability and the correct fix?",
+    "options": [
+      "The hardcoded token is exposed in version control — replace with <code>\"GITHUB_TOKEN\": \"${GITHUB_TOKEN}\"</code> and load the value from an environment variable or secrets manager",
+      "Rotate the token weekly; the static token is the primary vulnerability",
+      "The token should be stored in the system prompt instead, which is not version-controlled",
+      "Move the entire <code>.mcp.json</code> to <code>~/.claude.json</code> so it is not committed to the repo"
+    ],
+    "answer": 0,
+    "pattern": "MCP Secret Management — Environment Variables",
+    "explanation": "Hardcoding credentials in any version-controlled file is a critical security vulnerability — the token is now in git history permanently, even after deletion. The correct fix is to reference environment variables using <code>${VARIABLE_NAME}</code> syntax, with the actual values loaded from a secure source at runtime. System prompts (A) are often logged and not version-controlled in the same way but are not the right secrets store. Weekly rotation (C) reduces exposure window but doesn't prevent the leak. Moving to user-level config (D) prevents sharing the integration with the team.",
+    "background": "The <code>.mcp.json</code> project configuration is designed to be committed to version control so the entire team benefits from the same MCP server integrations. Credentials must therefore be externalized via environment variable references. The <code>${VARIABLE_NAME}</code> syntax in <code>.mcp.json</code> tells the MCP runtime to resolve the value from the environment. This keeps the configuration shareable while keeping secrets out of source control.",
+    "refs": [
+      {
+        "label": "MCP server configuration",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/mcp"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "domain": "Tool Design & MCP Integration",
+    "text": "A developer agent needs to find all TypeScript test files across a monorepo to run a coverage check. Which built-in tool is correct?",
+    "options": [
+      "Use <code>Glob</code> with pattern <code>**/*.test.ts</code> — it matches file paths by pattern without loading file contents",
+      "Use <code>Bash</code> with <code>find . -name \"*.test.ts\"</code> for cross-platform compatibility",
+      "Use <code>Grep</code> with pattern <code>\\.test\\.ts$</code> to search for the filename pattern across the repo",
+      "Use <code>Read</code> on the root directory, then recursively <code>Read</code> each subdirectory"
+    ],
+    "answer": 0,
+    "pattern": "Built-in Tool Selection — Glob for File Discovery",
+    "explanation": "<code>Glob</code> is the correct tool for finding files by path pattern — it's purpose-built for this, efficient, and returns only file paths without loading content. <code>Read</code> on directories (A) is not how <code>Read</code> works and would not discover nested files. <code>Grep</code> (B) searches file contents for patterns, not file paths — it would load every file looking for the pattern in its content. <code>Bash</code> (D) works but bypasses the purpose-built tool without good reason.",
+    "background": "Claude Code's built-in tools have distinct purposes: <code>Glob</code> finds files by path pattern (use for file discovery), <code>Grep</code> searches file contents for text patterns (use when you know the file and need to find where something is), <code>Read</code> loads file content (use when you need to analyze a specific file). Using the right tool for each task avoids loading unnecessary content into the context window.",
+    "refs": [
+      {
+        "label": "Claude Code built-in tools",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "domain": "Tool Design & MCP Integration",
+    "text": "A payment pipeline must always call <code>validate_input</code> before <code>process_payment</code>. In production, 8% of requests skip validation and call <code>process_payment</code> directly. System prompt instructions haven't fixed this. What is the correct API-level enforcement?",
+    "options": [
+      "Use a PreToolUse hook that cancels <code>process_payment</code> if <code>validate_input</code> hasn't been called yet",
+      "Add <code>\"ALWAYS call validate_input first — this is CRITICAL\"</code> to the system prompt in uppercase",
+      "Remove <code>process_payment</code> from <code>allowed_tools</code> initially and add it back programmatically only after validation passes",
+      "Set <code>tool_choice: {\"type\": \"tool\", \"name\": \"validate_input\"}</code> on the first API call — the API guarantees this tool is called, enforcing execution order"
+    ],
+    "answer": 3,
+    "pattern": "tool_choice Force for Execution Order",
+    "explanation": "<code>tool_choice: {\"type\": \"tool\", \"name\": \"validate_input\"}</code> is an API-level guarantee — the model has no discretion. This is the correct solution when prompt instructions have already failed. Option A is more of what failed. Option C is a valid architectural pattern but more complex to implement. Option D (PreToolUse hook) would also work but requires tracking call state, while <code>tool_choice</code> is simpler and cleaner for a two-step sequence.",
+    "background": "<code>tool_choice: {\"type\": \"tool\", \"name\": \"X\"}</code> forces the model to call a specific named tool, regardless of what it would choose under <code>auto</code>. This is the primary mechanism for enforcing execution order in pipelines. After the forced first call, subsequent turns can revert to <code>auto</code> or force the next step. Use this pattern for any pipeline where step order is non-negotiable.",
+    "refs": [
+      {
+        "label": "tool_choice and execution order",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "domain": "Tool Design & MCP Integration",
+    "text": "Two tools have these descriptions: <code>analyze_document: \"Analyzes content\"</code> and <code>web_search: \"Searches for content\"</code>. Document analysis tasks are routed to <code>web_search</code> 40% of the time. What is the most effective fix?",
+    "options": [
+      "Rewrite descriptions to state the contrast explicitly: <code>analyze_document: \"Processes a provided document from local storage or upload; use when content is already available. Do NOT use to find new information online.\"</code>",
+      "Add few-shot examples before the user request showing correct tool selection",
+      "Add a system prompt: \"Use analyze_document for local files, web_search for internet queries\"",
+      "Rename the tools to <code>document_only_analyzer</code> and <code>internet_only_searcher</code>"
+    ],
+    "answer": 0,
+    "pattern": "Tool Description — Explicit Differentiation",
+    "explanation": "Tool descriptions are the primary selection mechanism for LLMs. The current descriptions are so generic that the model cannot distinguish them. The fix is to make descriptions self-differentiating: state what the tool does, what it requires, when to use it, and critically — when NOT to use it. Renaming (A) helps slightly but the descriptions remain vague. System prompt instructions (B) is a band-aid. Few-shot examples (D) help but require more tokens and don't solve the underlying description problem.",
+    "background": "Models select tools based on the semantic match between the user's request and the tool description. Generic descriptions like 'analyzes content' fail because they match too broadly. Effective descriptions include: (1) what the tool does specifically, (2) what input it requires, (3) the unique advantage over similar tools, and (4) explicit 'use when X, do not use when Y' guidance. The 'when NOT to use' component is often the most valuable for disambiguation.",
+    "refs": [
+      {
+        "label": "Tool description best practices",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "domain": "Tool Design & MCP Integration",
+    "text": "A dependency analysis MCP tool <code>analyze_dependencies(repo_path)</code> returns a 500-line report covering imports, transitive deps, and circular references. Agents only need circular dependency detection most of the time, consuming excessive tokens. What is the correct refactor?",
+    "options": [
+      "Add caching so the 500-line report is stored and returned from cache on repeated calls",
+      "Split into three single-purpose tools: <code>list_imports</code>, <code>resolve_transitive_deps</code>, <code>detect_circular_deps</code> — agents select only what they need",
+      "Move the detailed report to an MCP Resource so it doesn't consume tool call tokens",
+      "Add a <code>report_type</code> parameter: <code>analyze_dependencies(repo_path, report_type: \"circular\" | \"imports\" | \"full\")</code>"
+    ],
+    "answer": 1,
+    "pattern": "Granular MCP Tool Design",
+    "explanation": "Splitting into single-purpose tools gives agents surgical precision — they call only the tool that produces exactly the data they need. This reduces token consumption and improves selection reliability. The parameterized approach (A) is better than the monolithic tool but still returns one of three reports; agents must know which to ask for. Caching (C) doesn't reduce tokens on first call or when fresh data is needed. An MCP Resource (D) is for static reference data, not dynamic analysis results.",
+    "background": "Tool granularity is a key design decision in MCP. Monolithic tools that do 'everything' are convenient but wasteful when agents only need a subset of their output. Single-purpose tools that each do one thing well enable agents to be precise and minimize context consumption. The rule of thumb: if a tool returns data the agent doesn't need in most cases, split it. Good tool design matches the agent's information needs, not the developer's convenience.",
+    "refs": [
+      {
+        "label": "MCP tool design principles",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/mcp"
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "domain": "Tool Design & MCP Integration",
+    "text": "A document analysis agent has access to a general-purpose <code>fetch_url</code> tool for loading documents. In production, the agent starts using <code>fetch_url</code> to query competitor websites mid-analysis. What is the correct architectural fix?",
+    "options": [
+      "Set <code>tool_choice: {\"type\": \"auto\"}</code> so the model only calls the tool when it genuinely needs it",
+      "Add a PostToolUse hook that validates the URL against an allowlist and discards non-approved responses",
+      "Replace <code>fetch_url</code> with a purpose-specific <code>load_document(document_id)</code> tool that only accepts pre-approved document IDs — this eliminates the unintended browsing capability at the API level",
+      "Add a system prompt: \"Only use fetch_url for documents provided by the user, never for browsing\""
+    ],
+    "answer": 2,
+    "pattern": "General-Purpose Tool Constraint",
+    "explanation": "The root cause is over-provisioning: <code>fetch_url</code> is a general-purpose tool that enables web browsing, which the agent shouldn't do. Replacing it with <code>load_document(document_id)</code> removes the capability entirely at the API level — the agent literally cannot browse the web because the tool to do so doesn't exist in its toolset. System prompt instructions (A) are probabilistic. PostToolUse validation (C) allows the call to happen and then discards results, which is reactive. <code>tool_choice: auto</code> (D) doesn't change what tools are available.",
+    "background": "Tool constraint is the agentic analogue of the principle of least privilege in security. When an agent has access to a capability it shouldn't use, the correct fix is to remove the capability, not to instruct the agent not to use it. Replacing broad tools with narrow, purpose-specific tools scopes the agent's capabilities to its role. This is more reliable than any amount of prompt engineering.",
+    "refs": [
+      {
+        "label": "Tool design and security",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "domain": "Tool Design & MCP Integration",
+    "text": "A developer configured a Jira MCP server in <code>~/.claude.json</code> for personal experimentation. Three months later, the team wants all developers to use the same Jira integration. What change enables team-wide access?",
+    "options": [
+      "Add the Jira server URL to the project's <code>CLAUDE.md</code> file so Claude knows to connect to it",
+      "Create a shared <code>~/.claude.json</code> template and distribute it via email",
+      "Move the Jira MCP configuration to the project's <code>.mcp.json</code> and commit it — it becomes available to all team members automatically",
+      "Each developer manually adds the same Jira config to their own <code>~/.claude.json</code>"
+    ],
+    "answer": 2,
+    "pattern": "Project-Level vs User-Level MCP Config",
+    "explanation": "<code>.mcp.json</code> at the project root is version-controlled and shared with the team automatically. <code>~/.claude.json</code> is user-level personal configuration. Moving the config to <code>.mcp.json</code> and committing it means every developer who clones the repo gets the Jira integration. Manual distribution (A, C) is fragile and doesn't scale. CLAUDE.md (D) is for instructions, not MCP server configuration.",
+    "background": "MCP server configuration has two scopes: user-level (<code>~/.claude.json</code>) for personal tools and experiments that shouldn't be shared, and project-level (<code>.mcp.json</code>) for integrations the whole team should use. The project-level file is committed to version control, so the MCP integration becomes part of the project's development environment. Credentials should always be externalized via environment variable references regardless of which file contains the server config.",
+    "refs": [
+      {
+        "label": "MCP configuration scopes",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/mcp"
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "domain": "Tool Design & MCP Integration",
+    "text": "A tool returns <code>{\"isError\": true, \"errorCategory\": \"validation\", \"isRetryable\": false, \"message\": \"Customer ID format invalid: must be 8 digits, received CUST-123\"}</code>. The agent retries the same call 3 times before escalating. What is wrong with this behavior?",
+    "options": [
+      "The agent should escalate immediately — validation errors with <code>isRetryable: false</code> indicate the input is wrong, and retrying without fixing the input will always fail",
+      "Validation errors should be silently suppressed; proceed with a null customer ID",
+      "The agent should retry validation errors — the model may self-correct the format on subsequent attempts",
+      "The <code>isRetryable</code> flag is advisory only — agents should always retry at least once"
+    ],
+    "answer": 0,
+    "pattern": "isRetryable — Validation Error Handling",
+    "explanation": "<code>isRetryable: false</code> is an explicit signal that retrying will not help. Validation errors mean the input was wrong — the same wrong input will produce the same error on retry. The agent should either fix the input (if it can parse the error and correct the format) or escalate (if it cannot). Retrying without changing the input is pointless. The flag is not advisory (C) — it is the tool's authoritative guidance on retry behavior. Silent suppression (D) would corrupt downstream data.",
+    "background": "Structured MCP error responses enable intelligent agent behavior by categorizing failures. Validation errors differ fundamentally from transient errors: they indicate the call was made incorrectly, not that the service is temporarily unavailable. The correct recovery for a validation error is to fix the input before retrying. If the agent cannot determine how to fix the input, it should escalate to a human rather than wasting retries.",
+    "refs": [
+      {
+        "label": "MCP error handling patterns",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "A team's root <code>CLAUDE.md</code> has grown to 800 lines covering coding standards, testing, deployment, and security. New team members find it overwhelming. The team wants to split it into focused files. What is the correct approach?",
+    "options": [
+      "Split into separate files and reference them from the project README",
+      "Use <code>@./standards/testing.md</code>, <code>@./standards/security.md</code> in the root <code>CLAUDE.md</code> — Claude loads all imported content as part of the project context",
+      "Move all content to directory-level <code>CLAUDE.md</code> files placed in each relevant subdirectory",
+      "Create <code>CLAUDE-testing.md</code>, <code>CLAUDE-security.md</code> etc. and instruct developers to read them manually"
+    ],
+    "answer": 1,
+    "pattern": "@path Modular CLAUDE.md Import",
+    "explanation": "The <code>@path</code> syntax in <code>CLAUDE.md</code> imports another file's content into the context. The root <code>CLAUDE.md</code> becomes a lean index of imports, and each topic lives in a focused file. Claude loads all imported content automatically. Manual reading (A) defeats the purpose — engineers forget. Directory-level files (C) require the instruction to be in the right directory, which doesn't work for cross-cutting concerns. README references (D) are for humans, not Claude.",
+    "background": "Claude Code supports modular <code>CLAUDE.md</code> organization via <code>@path</code> imports. Paths are resolved relative to the importing file. The import chain has a maximum depth of 5 levels. This enables large teams to maintain focused instruction files for each domain (testing, security, deployment) while keeping the root file as a readable index. It also makes updating individual sections easier — change one file without touching the others.",
+    "refs": [
+      {
+        "label": "CLAUDE.md organization",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "A senior engineer has all team conventions in <code>~/.claude/CLAUDE.md</code>. A new team member's Claude Code sessions ignore all conventions. What is the root cause?",
+    "options": [
+      "User-level <code>CLAUDE.md</code> requires a team license to activate sharing",
+      "The new member needs to reinstall Claude Code to sync team settings",
+      "The new member needs to manually copy <code>~/.claude/CLAUDE.md</code> from the senior engineer's machine",
+      "Team conventions in <code>~/.claude/CLAUDE.md</code> are personal — they exist only on the senior engineer's machine. Project conventions must live in the repository's <code>CLAUDE.md</code> to be shared via version control"
+    ],
+    "answer": 3,
+    "pattern": "User-Level vs Project-Level CLAUDE.md",
+    "explanation": "User-level <code>~/.claude/CLAUDE.md</code> is personal and never shared via version control. It's the right place for personal preferences (preferred formatting style, personal shortcuts) — not team conventions. Team conventions belong in the project repository's <code>CLAUDE.md</code>, committed to git so every developer who clones the repo automatically has them. The senior engineer made the common mistake of using their personal file for team standards.",
+    "background": "The CLAUDE.md hierarchy has three levels: user-level (<code>~/.claude/CLAUDE.md</code>) for personal preferences, project-level (root <code>CLAUDE.md</code> or <code>.claude/CLAUDE.md</code>) for team-wide standards, and directory-level <code>CLAUDE.md</code> files for subsystem-specific conventions. Only project-level and directory-level files are committed to version control and shared across the team. When onboarding fails, the first question is: which level were the conventions placed at?",
+    "refs": [
+      {
+        "label": "CLAUDE.md hierarchy",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "A <code>/audit-dependencies</code> skill is designed to only read and analyze code — it should never modify files. The team wants this enforced even if the skill's prompt is compromised. What is the correct configuration?",
+    "options": [
+      "Use <code>context: fork</code> so the skill runs in isolation and any changes don't affect the main session",
+      "Remove <code>Write</code> from Claude Code's global allowed tools while the audit is running",
+      "Set <code>allowed-tools: [\"Read\", \"Grep\", \"Glob\"]</code> in the skill's SKILL.md frontmatter — tool restrictions are enforced at the system level regardless of prompt content",
+      "Include \"Do not modify any files\" prominently in the skill's prompt"
+    ],
+    "answer": 2,
+    "pattern": "Skill allowed-tools Security Enforcement",
+    "explanation": "Frontmatter <code>allowed-tools</code> is enforced by Claude Code's runtime — it cannot be overridden by prompt content. If <code>Write</code> is not in the list, the skill literally cannot write files, regardless of what the prompt says. System prompt instructions (A) are the weakest control — they're probabilistic and could be bypassed by prompt injection. Modifying global tools (C) affects all running agents, not just the skill. <code>context: fork</code> (D) isolates the session but doesn't prevent file writes within that session.",
+    "background": "SKILL.md frontmatter provides system-level security controls for skills. <code>allowed-tools</code> creates a hard capability boundary: tools not in the list are unavailable regardless of model instructions. This is the correct defense-in-depth approach for read-only skills — you don't rely on the model correctly following instructions. You remove the capability at the infrastructure level. This also makes the skill's security posture explicit and auditable.",
+    "refs": [
+      {
+        "label": "Claude Code skills and SKILL.md",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "A CI/CD pipeline runs Claude to review PRs and posts results as GitHub comments. The current implementation parses Claude's free-text output with regex, causing 12% of comments to be malformed. What is the correct fix?",
+    "options": [
+      "Wrap the Claude output in a try/catch and silently skip malformed responses",
+      "Use <code>claude -p \"Review this PR\" --output-format json --json-schema '{...}'</code> — this guarantees schema-validated structured output that can be safely parsed without regex",
+      "Use the Batch API to process PR reviews, which always returns structured JSON",
+      "Ask Claude to \"format your review as JSON with fields: severity, file, line, message\""
+    ],
+    "answer": 1,
+    "pattern": "CI/CD Structured JSON Output",
+    "explanation": "The <code>--output-format json --json-schema</code> flags enforce structured output at the CLI level, producing schema-validated JSON that requires no regex parsing. Asking nicely (A) is what was failing. Silent error suppression (C) loses review feedback. The Batch API (D) is for high-volume async processing, not interactive PR review, and does not inherently return structured JSON.",
+    "background": "Claude Code's <code>-p</code> flag enables non-interactive mode for CI/CD. Combined with <code>--output-format json</code> and <code>--json-schema</code>, it produces machine-parseable output that downstream tools can consume reliably. This is the standard pattern for integrating Claude into automated pipelines: define a schema, enforce it via CLI flags, parse the result programmatically without fragile regex.",
+    "refs": [
+      {
+        "label": "Claude Code CLI flags",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "A team creates a <code>/generate-api-docs</code> slash command. After committing it to the repository, some team members can invoke it but others cannot. All have Claude Code installed. What is the issue?",
+    "options": [
+      "The command was placed in <code>~/.claude/commands/</code> instead of <code>.claude/commands/</code> — user-level commands are only visible to their creator",
+      "The command filename must match a specific naming convention to be recognized by Claude Code",
+      "Slash commands cannot be committed to version control for security reasons",
+      "Slash commands require a paid Claude Code subscription to share across teams"
+    ],
+    "answer": 0,
+    "pattern": "Project Commands vs User Commands",
+    "explanation": "Project-level commands in <code>.claude/commands/</code> are committed to the repository and available to all team members. User-level commands in <code>~/.claude/commands/</code> are personal and never shared. If some team members can see the command and others cannot, the command was placed in the wrong directory. Subscriptions (A) don't affect command visibility. File naming (C) is not the issue. Commands can and should be committed (D).",
+    "background": "Claude Code has two command scopes: <code>.claude/commands/</code> (project-level, version-controlled, team-shared) and <code>~/.claude/commands/</code> (user-level, personal). Project commands should contain team workflows that everyone needs — PR review templates, test generation, documentation generation. User commands contain personal shortcuts specific to an individual's workflow.",
+    "refs": [
+      {
+        "label": "Custom slash commands",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "A team has TypeScript conventions that apply to all <code>*.ts</code> files across 15 subdirectories. They want Claude to enforce these whenever it edits any <code>.ts</code> file. What is the most maintainable approach?",
+    "options": [
+      "Create <code>.claude/rules/typescript.md</code> with <code>paths: [\"**/*.ts\"]</code> in the frontmatter — rules load automatically when any <code>.ts</code> file is edited, regardless of subdirectory",
+      "Add the TypeScript rules to the root <code>CLAUDE.md</code> and rely on Claude to apply them to TypeScript files",
+      "Add a <code>CLAUDE.md</code> file to each of the 15 subdirectories repeating the same TypeScript rules",
+      "Add the TypeScript rules to <code>~/.claude/CLAUDE.md</code> so they apply across all projects"
+    ],
+    "answer": 0,
+    "pattern": "Path-Scoped Rules vs Directory CLAUDE.md",
+    "explanation": "Path-scoped rules in <code>.claude/rules/</code> with glob frontmatter are the correct solution for conventions that apply by file type across many directories. They load only when relevant files are edited (saving context), and you maintain one copy (not 15). Duplicating CLAUDE.md in 15 directories (A) creates maintenance debt. Root CLAUDE.md (B) works but loads always, wasting context on non-TypeScript work. User-level (D) is personal, not project-specific.",
+    "background": "The <code>.claude/rules/</code> directory supports path-scoped rules via YAML frontmatter with a <code>paths</code> field accepting glob patterns. Rules only load into context when the agent is editing files that match the pattern. This is more token-efficient than including all rules in the root CLAUDE.md. It also enables precise convention targeting: API rules for API files, test rules for test files, security rules for auth files.",
+    "refs": [
+      {
+        "label": "Path-scoped rules in Claude Code",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "An engineer asks Claude Code to refactor a 50-file authentication system. Claude starts immediately modifying files, makes 15 changes, and then discovers the auth middleware is shared by 8 other services. Rollback takes 2 hours. What workflow would have prevented this?",
+    "options": [
+      "Enable plan mode first — Claude investigates and produces a plan for approval. Only execute after the full scope is understood and the plan is approved.",
+      "Limit Claude to changing one file at a time, reviewing each change before proceeding",
+      "Use a single pre-edit prompt: \"Summarize your refactoring plan before making any changes\"",
+      "Ask Claude to create a backup branch before starting any refactoring"
+    ],
+    "answer": 0,
+    "pattern": "Plan Mode for Large Scope Changes",
+    "explanation": "Plan mode prevents exactly this failure: Claude uses read-only tools (Read, Grep, Glob) to fully investigate the codebase and produce an implementation plan before making any changes. The developer reviews and approves the plan — including discovering the shared middleware dependency — before execution begins. A single summary prompt (A) doesn't prevent Claude from acting. Backup branches (C) enable recovery but don't prevent the problem. File-by-file review (D) is tedious and still doesn't reveal cross-cutting dependencies upfront.",
+    "background": "Plan mode is Claude Code's investigation-before-action workflow. In plan mode, Claude uses only read-only tools to explore the codebase and produces a structured plan for the user to review. No files are modified. This is the correct workflow for any change touching multiple files, unfamiliar codebases, or cross-cutting concerns. The cost of review is low; the cost of unexpected cross-service impact is high.",
+    "refs": [
+      {
+        "label": "Claude Code plan mode",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "A CLAUDE.md hierarchy is designed as: root → <code>@standards/main.md</code> → <code>@details.md</code> → <code>@edge-cases.md</code> → <code>@footnotes.md</code> → <code>@archive.md</code>. Will all 6 levels of content load?",
+    "options": [
+      "Yes — Claude follows all <code>@path</code> imports regardless of nesting depth",
+      "No — circular import detection will abort loading after 3 levels",
+      "Yes — but content beyond level 3 will have reduced priority in Claude's attention",
+      "No — the maximum supported import nesting depth is 5 levels; <code>@archive.md</code> at level 6 will not be loaded"
+    ],
+    "answer": 3,
+    "pattern": "CLAUDE.md Import Depth Limit",
+    "explanation": "The maximum supported <code>@path</code> import depth is 5 levels. Root is level 1, <code>main.md</code> is level 2, <code>details.md</code> is level 3, <code>edge-cases.md</code> is level 4, <code>footnotes.md</code> is level 5, and <code>archive.md</code> would be level 6 — which exceeds the limit and will not be loaded. There is no \"reduced priority\" behavior (D) — content either loads or it doesn't. Circular detection (C) is a separate mechanism.",
+    "background": "Claude Code enforces a maximum import depth of 5 levels to prevent runaway import chains and maintain predictable loading behavior. When designing deep CLAUDE.md hierarchies, ensure the most critical instructions are in the first few import levels. Anything at level 6+ will be silently ignored. Prefer breadth over depth: a flat structure with multiple imports from the root is more reliable than deep chains.",
+    "refs": [
+      {
+        "label": "CLAUDE.md import depth",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "A developer approves Claude's implementation plan, Claude implements it, and then the developer reviews the git diff — finding 3 unexpected files were modified beyond the plan's scope. What workflow step was missed?",
+    "options": [
+      "After implementation, verify that actual changes match the approved plan before committing — review the diff, run tests, and confirm scope didn't expand",
+      "The developer should have used a <code>--dry-run</code> flag before approving the plan",
+      "The plan approval step should lock which files can be modified via filesystem ACLs",
+      "Claude should automatically revert any changes not explicitly listed in the plan"
+    ],
+    "answer": 0,
+    "pattern": "Plan-Approve-Implement-Verify Cycle",
+    "explanation": "The plan-approve-implement-verify cycle has four steps. The developer performed three and skipped verification. After implementation, always review the actual diff against the approved plan. Unexpected modifications indicate scope expansion — catch this before committing. There is no <code>--dry-run</code> flag (A). Claude doesn't auto-revert (C) — that would require the model to maintain perfect knowledge of its own plan. Filesystem ACLs (D) are impractical for dynamic development.",
+    "background": "The plan-approve-implement-verify cycle is the complete workflow for safe agentic code changes: (1) Claude investigates and plans in read-only mode, (2) developer reviews and approves the plan, (3) Claude implements, (4) developer verifies actual changes match plan before committing. Skipping step 4 means unexpected scope expansion can enter the codebase undetected. The verification step is short but critical.",
+    "refs": [
+      {
+        "label": "Claude Code workflow",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "An engineer spends 3 hours investigating a memory leak across 40 files with Claude Code. She closes her laptop for the night. How can she continue with full investigation context the next morning?",
+    "options": [
+      "Claude Code automatically restores the last session on next startup",
+      "She saved the session with a name (e.g., <code>--save memory-leak</code>) and resumes with <code>--resume memory-leak</code> — the full conversation and findings are restored",
+      "Use <code>claude --continue</code> which always loads the most recent session automatically",
+      "She should copy the conversation transcript and paste it as context for the new session"
+    ],
+    "answer": 1,
+    "pattern": "--resume Named Session",
+    "explanation": "Named sessions created with <code>--save</code> can be resumed by name with <code>--resume</code>, restoring the complete investigation context. Claude Code does not automatically restore sessions on startup (A) — sessions must be explicitly named and resumed. Copy-pasting transcripts (C) is fragile and loses the structured tool-use history. <code>--continue</code> (D) is not the correct flag for resuming named sessions.",
+    "background": "Named sessions are a productivity feature for long-running investigations. When you know a task will span multiple sessions, save it with a descriptive name from the start. The session persists all conversation history, tool results, and context — enabling seamless resumption. This is especially valuable for incident investigations, large refactoring tasks, and codebase exploration that cannot be completed in a single sitting.",
+    "refs": [
+      {
+        "label": "Claude Code session management",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "A <code>/analyze-module</code> skill requires a module path argument. When invoked without arguments, it silently fails with no user feedback. What SKILL.md frontmatter property improves the UX?",
+    "options": [
+      "<code>input-schema: {\"type\": \"string\", \"description\": \"Module path\"}</code>",
+      "<code>required-args: [\"module_path\"]</code>",
+      "<code>prompt: \"Please provide a module path before running\"</code>",
+      "<code>argument-hint: \"Path to the module (e.g., src/payments/processor.ts)\"</code> — when invoked without arguments, Claude Code prompts the user with this hint"
+    ],
+    "answer": 3,
+    "pattern": "Skill argument-hint Frontmatter",
+    "explanation": "<code>argument-hint</code> is the SKILL.md frontmatter property that provides a UX prompt when the skill is invoked without required arguments. It shows users what input is needed, including an example. <code>required-args</code> (A) is not a valid SKILL.md frontmatter field. <code>input-schema</code> (C) is not a supported frontmatter property. Adding a prompt to the skill body (D) doesn't prevent silent failure when no argument is passed.",
+    "background": "SKILL.md frontmatter controls the runtime behavior of Claude Code skills. Key frontmatter fields: <code>context: fork</code> (run in isolated subagent), <code>allowed-tools</code> (capability restriction), and <code>argument-hint</code> (UX prompt for missing arguments). The <code>argument-hint</code> value is displayed to the user when they invoke the skill with <code>/skill-name</code> but no arguments, guiding them to provide the required input.",
+    "refs": [
+      {
+        "label": "Claude Code skills frontmatter",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "A CI pipeline runs a full Claude code review on every commit. Developers complain that the same pre-existing issues appear in every review, burying new findings. What is the correct fix?",
+    "options": [
+      "Include the previous review results in the Claude prompt and instruct it: \"Report only issues that are new or not yet resolved since the last review\"",
+      "Reset the review entirely on every third commit to get a fresh perspective",
+      "Run the review only on changed files, not the full codebase",
+      "Filter out low-severity issues automatically from all re-reviews"
+    ],
+    "answer": 0,
+    "pattern": "CI/CD Incremental Re-Review",
+    "explanation": "The correct fix is context-aware re-review: provide the prior review results and explicitly scope the new review to new findings only. This makes each review actionable. Filtering by severity (A) hides real issues, not repeated ones. File-scoped review (B) can miss issues that span files or are introduced indirectly. Periodic resets (D) don't solve the repetition problem — the pre-existing issues reappear after each reset.",
+    "background": "CI/CD code review sessions benefit from continuity. Each review build on the previous by including prior results in the context and scoping to new or unresolved issues. This mirrors how human code review works — reviewers track what was flagged before and focus on whether issues were addressed. The implementation: store review results as a build artifact, pass them to the next review run, and instruct Claude to diff against them.",
+    "refs": [
+      {
+        "label": "CI/CD with Claude Code",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "A customer support agent has <code>get_customer(email)</code> and <code>lookup_order(order_id)</code>. When a customer says \"I have a problem with my recent order,\" the agent calls <code>lookup_order</code> first 40% of the time — but it should always call <code>get_customer</code> first to establish identity. What is the most effective fix?",
+    "options": [
+      "Add a system prompt: \"Always call get_customer before lookup_order\"",
+      "Remove <code>lookup_order</code> from the initial toolset and add it only after <code>get_customer</code> returns",
+      "Add few-shot examples: request \"I have a problem with my order\" → first call <code>get_customer</code>, then use the returned <code>customer_id</code> to call <code>lookup_order</code>, with rationale for why this sequence is correct",
+      "Rename <code>lookup_order</code> to <code>lookup_order_by_id</code> to emphasize the required parameter"
+    ],
+    "answer": 2,
+    "pattern": "Few-Shot Tool Selection Disambiguation",
+    "explanation": "Few-shot examples are the most effective technique for teaching the model correct sequencing in ambiguous situations. The example shows the ambiguous request, the correct first action, the reasoning, and the resulting second action — giving the model a template to generalize from. Renaming (A) helps slightly but doesn't address sequencing. Dynamic toolset manipulation (C) is complex to implement. System prompt instructions (D) have already been the implicit expectation and still fail without the example.",
+    "background": "Few-shot prompting is most valuable for ambiguous situations where the correct action isn't derivable from the request alone. A customer saying \"I have a problem with my order\" doesn't include an order ID, so calling <code>lookup_order</code> first can't work — but this requires inferential knowledge. The few-shot example teaches the model to recognize that identity verification always precedes order lookup. 2–4 targeted examples outperform verbose instruction for this class of problem.",
+    "refs": [
+      {
+        "label": "Few-shot prompting techniques",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "A contract extraction schema has <code>\"attendee_count\": {\"type\": \"integer\"}</code> as a required field. For contracts that don't mention attendees, the model generates plausible values: 50, 100, 250. What change eliminates hallucinated values?",
+    "options": [
+      "Set <code>temperature: 0</code> — deterministic generation prevents hallucinated values",
+      "Mark the field as <code>\"type\": [\"integer\", \"null\"]</code> and add explicit instruction: \"If attendee_count is not mentioned in the document, return null\"",
+      "Remove <code>attendee_count</code> from the schema for contracts that don't mention it",
+      "Change the type to <code>\"string\"</code> so the model can write \"unknown\" as text"
+    ],
+    "answer": 1,
+    "pattern": "Nullable Fields — Prevent Hallucination",
+    "explanation": "Marking as <code>[\"integer\", \"null\"]</code> plus explicit null instruction gives the model permission to return null instead of inventing a value. Without this, a required integer field creates pressure to produce a number even when none exists. Changing to string (A) replaces integer hallucinations with string hallucinations. Dynamically removing schema fields (C) requires pre-processing. Temperature 0 (D) makes output deterministic but doesn't prevent hallucination — it consistently returns the same hallucinated value.",
+    "background": "Model hallucination in structured extraction often occurs because the schema signals that a field is required, creating implicit pressure to provide a value. The correct pattern for optional information is: (1) use nullable types (<code>[\"type\", \"null\"]</code>), and (2) include explicit instruction to return null if the information is absent. Both are needed — the schema type permits null, and the instruction directs the model to use null rather than estimate.",
+    "refs": [
+      {
+        "label": "JSON schema for tool use",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 42,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "An insurance pipeline uses <code>claim_type: {\"enum\": [\"auto\", \"home\", \"health\", \"life\"]}</code>. New claim types — drone, rideshare, aquatic — keep breaking validation. What schema change makes this production-resilient?",
+    "options": [
+      "Replace the enum with <code>\"type\": \"string\"</code> and validate patterns in post-processing",
+      "Add every new claim type to the enum as it appears — expand the list reactively",
+      "Replace the enum with a free-text field and use a separate classifier to normalize values",
+      "Change to <code>{\"enum\": [\"auto\", \"home\", \"health\", \"life\", \"other\"]}</code> and add <code>\"claim_type_detail\": {\"type\": [\"string\", \"null\"]}</code> — \"other\" handles novel types, the detail field captures specifics"
+    ],
+    "answer": 3,
+    "pattern": "Enum Catch-All with Detail Field",
+    "explanation": "The catch-all pattern adds an \"other\" value to the enum plus a detail field for specifics. This makes the schema forward-compatible — new claim types never break validation. They are classified as \"other\" and described in the detail field. Reactive expansion (A) requires code changes for each new type and fails until the update is deployed. Unconstrained string (B) loses the categorical structure needed for downstream routing. A separate classifier (D) adds infrastructure complexity.",
+    "background": "Enum fields in extraction schemas face an inherent tension: strict enums provide clean categorization but break on novel inputs; unconstrained strings are flexible but lose structure. The catch-all pattern resolves this tension: maintain the categorical enum for known values (enabling deterministic routing and aggregation), and add \"other\" + a detail field for unknown values (enabling graceful degradation). This pattern is essential for any domain where the input space evolves over time.",
+    "refs": [
+      {
+        "label": "Schema design for structured extraction",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 43,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "A batch of 500 medical record extractions is submitted to the Message Batches API. Processing completes with 487 successes and 13 failures. How should the team handle the failures?",
+    "options": [
+      "Resubmit the entire 500-record batch — there is no way to identify individual failures",
+      "Accept 13 failures as within the expected error rate and proceed without them",
+      "Use the <code>custom_id</code> field assigned to each request to identify the 13 failed jobs and resubmit only those",
+      "Check the batch error log for failing record positions (index 1–500) and resubmit by position"
+    ],
+    "answer": 2,
+    "pattern": "Batch API custom_id Failure Recovery",
+    "explanation": "<code>custom_id</code> is the mechanism for correlating Batch API responses to their original requests. Each request is assigned a <code>custom_id</code>; the response includes the same ID. Failed requests are identifiable by their <code>custom_id</code> values, enabling targeted resubmission of only the 13 failures. Full resubmission (A) duplicates the 487 successful records unnecessarily. Position-based tracking (C) is not how the Batch API works. Accepting failures (D) may violate compliance requirements for medical records.",
+    "background": "The Message Batches API is designed for high-volume async processing. The <code>custom_id</code> field (set by the caller) enables reliable request-response correlation when responses arrive in non-deterministic order. This same field enables partial failure recovery: filter the response list for errors, extract their <code>custom_id</code> values, look up the original requests, and resubmit. This is the standard production pattern for reliable batch processing.",
+    "refs": [
+      {
+        "label": "Message Batches API",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/batch-api"
+      }
+    ]
+  },
+  {
+    "id": 44,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "An invoice extraction pipeline reports 6% discrepancy errors where extracted line items don't sum to the stated total. The team wants to detect these automatically within the extraction step. What schema change enables this?",
+    "options": [
+      "Add a separate validation step after extraction that sums line items",
+      "Instruct the model: \"Verify your arithmetic before submitting the extraction\"",
+      "Use a PostToolUse hook to run arithmetic validation on every extraction result",
+      "Extract both <code>stated_total</code> (as written in the document) and <code>calculated_total</code> (model sums the line items) — when they differ, flag for human review"
+    ],
+    "answer": 3,
+    "pattern": "Schema Redundancy for Mathematical Self-Correction",
+    "explanation": "Extracting both the stated total and the calculated total creates built-in discrepancy detection. When they differ, the extraction itself signals the inconsistency — no external validation step needed. A separate validation step (A) works but is architecturally separate and delayed. Prompt-based arithmetic verification (C) is unreliable — the model may miscalculate the same way twice. A PostToolUse hook (D) requires custom implementation and is external to the extraction schema.",
+    "background": "Schema redundancy is a powerful technique for self-validating extractions. By extracting the same fact from two different perspectives (stated vs. calculated, text vs. table, header vs. footer), discrepancies surface automatically. This is the invoice extraction equivalent of double-entry bookkeeping. The redundant fields cost little in tokens but provide high-value validation signals that drive human review queues precisely where accuracy matters most.",
+    "refs": [
+      {
+        "label": "Structured output design patterns",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 45,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "A legal pipeline uses Pydantic with <code>jurisdiction: str</code>. The model returns <code>\"NY, NY\"</code> instead of the required two-letter state code <code>\"NY\"</code>. Pydantic validation passes. What is missing?",
+    "options": [
+      "Update the prompt: \"Return only the two-letter state abbreviation (e.g., NY, CA)\"",
+      "Pydantic validates structure but not semantics — add a custom Pydantic validator that checks <code>jurisdiction</code> matches the <code>^[A-Z]{2}$</code> pattern",
+      "Add <code>max_length=2</code> to the field definition to enforce the two-character limit",
+      "Change the type to <code>Enum</code> with all 50 state codes listed"
+    ],
+    "answer": 1,
+    "pattern": "Pydantic Structural vs Semantic Validation",
+    "explanation": "Pydantic validates that <code>jurisdiction</code> is a non-null string — it passes because <code>\"NY, NY\"</code> is indeed a string. Semantic validity (matching a specific pattern or format) requires a custom validator. A full enum (A) works but requires maintaining 50+ values. <code>max_length=2</code> (C) would reject <code>\"NY\"</code> being just 2 chars... wait, actually max_length=2 would catch \"NY, NY\" as too long — but this is brittle and regex is more robust. A prompt fix (D) reduces frequency but doesn't eliminate the problem.",
+    "background": "Pydantic operates at two levels: structural validation (are fields present, are types correct?) and semantic validation (does the value satisfy business rules?). Structural validation catches type errors, missing required fields, and enum violations. Semantic validation requires custom validators (using <code>@validator</code> or <code>@field_validator</code> in Pydantic v2) for business rules like format patterns, range constraints, and cross-field consistency checks. Always add semantic validators for fields with specific format requirements.",
+    "refs": [
+      {
+        "label": "Structured output validation",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 46,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "A recipe extraction pipeline normalizes ingredient quantities. Inputs vary: \"2 cups\", \"two cups\", \"~500ml\", \"a handful\". Output is inconsistent even with <code>temperature: 0</code>. What is the most reliable fix?",
+    "options": [
+      "Instruct the model: \"Always convert measurements to metric units with numeric values\"",
+      "Add few-shot examples: <code>\"two cups\" → {\"amount\": 2, \"unit\": \"cup\"}</code>, <code>\"~500ml\" → {\"amount\": 500, \"unit\": \"ml\", \"approximate\": true}</code>, <code>\"a handful\" → {\"amount\": null, \"unit\": \"handful\", \"approximate\": true}</code>",
+      "Define an enum of all allowed unit strings and require selection from the list",
+      "Post-process the output with a rules-based unit conversion library"
+    ],
+    "answer": 1,
+    "pattern": "Format Normalization via Few-Shot Examples",
+    "explanation": "Few-shot examples directly demonstrate the target normalization for each input variation. The model generalizes the pattern to new inputs. A rules-based post-processor (A) works but requires maintaining code for each format variation. An enum (C) handles units but not the varied quantity expressions (\"two\", \"~500\", \"a handful\"). Text instructions (D) address the explicit cases but leave edge cases ambiguous — the model still has to infer the pattern.",
+    "background": "Few-shot prompting for format normalization works because it shows the model the complete transformation: input format → output structure. Including 3–5 examples covering different input patterns (written number, approximate, vague quantity) teaches the model to generalize. This is more maintainable than rules-based post-processing for natural language quantities, which have infinite variation. Temperature 0 ensures determinism but doesn't eliminate ambiguity about what the correct output should be.",
+    "refs": [
+      {
+        "label": "Prompt engineering with examples",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "A code generation agent reviews its own output for bugs and misses 35% of the bugs it introduces. An independent Claude instance without the generation context catches 78% of those same bugs. What explains the difference?",
+    "options": [
+      "The second instance benefits from a longer context window with no prior messages consuming tokens",
+      "The generating instance retains its own reasoning context and is less likely to challenge decisions it just made — an independent instance evaluates the code without prior commitment",
+      "The second instance uses a different, more capable model version for review tasks",
+      "The generating instance is rate-limited after long generation sessions, degrading review quality"
+    ],
+    "answer": 1,
+    "pattern": "Multi-Instance Review — Independent Context",
+    "explanation": "The generating instance carries the reasoning that produced the code. This context creates implicit bias — the model is less likely to identify flaws in decisions it just reasoned through. An independent instance has no such commitment and evaluates the code on its own merits. This isn't a model capability difference (A) — it's the same model. Context length (C) is a minor factor, not the primary cause. Rate limiting (D) is not a factor in typical review cycles.",
+    "background": "Self-review is systematically less effective than independent review in both humans and language models. The generating instance's context includes the reasoning that produced each decision, creating anchoring bias. An independent reviewer starts fresh, without preconceptions about why the code is structured as it is. In production CI/CD pipelines, the reviewer instance should be a clean context that receives only the code diff and review criteria — not the conversation that generated the code.",
+    "refs": [
+      {
+        "label": "Multi-instance review patterns",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "A PR review prompt uses severity labels: CRITICAL, HIGH, MEDIUM, LOW. The same SQL injection vulnerability is labeled CRITICAL 60% of the time and HIGH 40% of the time across runs. What prompt change eliminates this inconsistency?",
+    "options": [
+      "Define each severity level with concrete examples: \"CRITICAL: Causes immediate data loss or security breach (e.g., unauthenticated SQL injection, plaintext password storage). HIGH: Exploitable without immediate breach (e.g., missing rate limiting, IDOR with authentication required).\"",
+      "Reduce to two severity levels (CRITICAL / NON-CRITICAL) to eliminate ambiguity",
+      "Add confidence scores alongside severity labels and flag discrepancies for human review",
+      "Set <code>temperature: 0</code> to make severity assignment deterministic"
+    ],
+    "answer": 0,
+    "pattern": "Explicit Severity Criteria with Examples",
+    "explanation": "Severity inconsistency comes from ambiguous category boundaries. Defining each level with concrete examples grounds the classification in observable characteristics rather than subjective judgment. The SQL injection gets consistently labeled CRITICAL once that label is defined as \"unauthenticated SQL injection.\" Temperature 0 (C) makes output deterministic but doesn't resolve category ambiguity — the model consistently applies the same vague interpretation. Confidence scores (A) surface the problem but don't fix it. Two levels (D) reduces granularity unnecessarily.",
+    "background": "Classification consistency in model outputs requires calibrated definitions. Vague labels like 'critical' are interpreted differently based on context and framing. Grounding each label in concrete examples creates shared understanding between the model and the reviewer. The examples should be chosen to mark the boundaries between adjacent categories — what makes something CRITICAL vs HIGH is more important than what makes something clearly CRITICAL. 2–3 examples per category is typically sufficient.",
+    "refs": [
+      {
+        "label": "Explicit criteria in prompts",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 49,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "A team needs to process 10,000 compliance documents. The deadline is in 28 hours. The Message Batches API has a maximum 24-hour processing window. When must the batch be submitted?",
+    "options": [
+      "Use the real-time API instead — the Batch API cannot reliably meet a 28-hour deadline",
+      "Submit within 4 hours — submitting by hour 4 means the 24-hour window completes by hour 28",
+      "Split into two batches of 5,000 submitted 12 hours apart to distribute load",
+      "Submit immediately — 24 hours processing + remaining time will comfortably meet the 28-hour deadline"
+    ],
+    "answer": 1,
+    "pattern": "Batch API Deadline Calculation",
+    "explanation": "The math: 28-hour deadline − 24-hour maximum processing window = 4 hours. The batch must be submitted within 4 hours so the processing window completes before the deadline. Submitting immediately (A) is technically correct but \"comfortably\" is misleading — submitting at hour 5 would miss the deadline. Splitting (C) doesn't help — each batch still needs 24 hours. The real-time API (D) would work but at significantly higher cost for 10,000 documents.",
+    "background": "Batch API SLA planning requires explicit deadline arithmetic: submission_deadline = target_deadline − max_processing_time. For the Message Batches API: max processing time is 24 hours, so for any deadline under 24 hours, use the real-time API. For deadlines between 24 and 48 hours, calculate the submission deadline. For deadlines beyond 48 hours, even delayed submission works. Always factor in the processing window when planning high-volume batch workloads.",
+    "refs": [
+      {
+        "label": "Message Batches API",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/batch-api"
+      }
+    ]
+  },
+  {
+    "id": 50,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "Pydantic validation fails with: <code>\"date_of_birth must be ISO 8601 (YYYY-MM-DD), received: '01/15/1985'\"</code>. The system retries with a blank prompt. Retry fails 80% of the time. What change improves success rate?",
+    "options": [
+      "Include the original document, the failed extraction, and the specific error in the retry: \"Validation failed: date_of_birth must be ISO 8601 (YYYY-MM-DD), received '01/15/1985'. Re-extract and correct this field.\"",
+      "Use <code>temperature: 0.2</code> on retries to add variation that may produce the correct format",
+      "Increase <code>max_retries</code> to 10 — the correct format will eventually appear",
+      "Add more few-shot examples to the base prompt covering all date input formats"
+    ],
+    "answer": 0,
+    "pattern": "Retry with Error Feedback Loop",
+    "explanation": "Blank retries fail because the model has no information about what went wrong. Including the original document, the failed extraction, and the specific error gives the model everything it needs to correct the specific field. Temperature variation (A) randomizes output without directing it toward the correction. More base examples (C) help long-term but don't fix the immediate failure. More retries (D) with a blank prompt just repeat the same failure.",
+    "background": "The retry-with-error-feedback pattern converts extraction errors into a correction loop. The retry prompt structure: original document → failed extraction → specific validation error → instruction to correct. This pattern works for format errors (wrong date format, wrong currency representation) because the information exists in the document and the model just formatted it incorrectly. It does NOT work for missing information — if the date isn't in the document, no number of retries will produce it.",
+    "refs": [
+      {
+        "label": "Validation and retry patterns",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 51,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "A structured extraction tool is defined with a JSON schema. With <code>tool_choice: {\"type\": \"auto\"}</code>, 6% of responses are free-text explanations instead of tool calls. The team needs 100% structured output. What change achieves this?",
+    "options": [
+      "Add \"You must always call the extract_data tool\" to the system prompt",
+      "Use <code>stop_sequences</code> to intercept text responses before they complete",
+      "Set <code>temperature: 0</code> to make the model deterministically choose the tool",
+      "Change to <code>tool_choice: {\"type\": \"any\"}</code> — forces the model to call some tool on every response, eliminating free-text output"
+    ],
+    "answer": 3,
+    "pattern": "tool_choice: any vs auto",
+    "explanation": "<code>tool_choice: {\"type\": \"any\"}</code> is an API-level enforcement that the model must call a tool on this response — it cannot return free text. This eliminates the 6% text responses entirely. System prompt instructions (B) are probabilistic and already implicitly the expectation. Stop sequences (C) would break the response mid-extraction. Temperature 0 (D) makes the model deterministic but doesn't guarantee it always picks the tool over text — if \"auto\" allows text, temperature 0 just consistently picks the same wrong option.",
+    "background": "<code>tool_choice</code> has three modes with different guarantees: <code>auto</code> (model decides), <code>any</code> (must call some tool — use when you have multiple tools and any structured output is acceptable), <code>{\"type\": \"tool\", \"name\": \"X\"}</code> (must call this specific tool — use when you need a specific tool). For 100% structured output guarantees, use <code>any</code> or a named tool. Never rely on prompt instructions alone for structural requirements.",
+    "refs": [
+      {
+        "label": "tool_choice parameter",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ]
+  },
+  {
+    "id": 52,
+    "domain": "Context Management & Reliability",
+    "text": "A research synthesis agent summarizes findings from 15 sources. The final report contains \"AI music market valued at $3.2B\" without attribution. A fact-checker finds this conflicts with a newer source showing $5.1B. What structural change prevents lost provenance?",
+    "options": [
+      "Run a separate citation-extraction pass after synthesis to retroactively add sources",
+      "Instruct the agent to cite sources inline using numbered footnotes",
+      "Store all source documents in a vector store for post-hoc lookup",
+      "Require all subagents to output <code>{\"claim\": \"...\", \"source_url\": \"...\", \"publication_date\": \"...\", \"confidence\": 0.9}</code> claim-source mappings; the synthesis agent preserves these in the final report"
+    ],
+    "answer": 3,
+    "pattern": "Provenance Preservation — Claim-Source Mapping",
+    "explanation": "Structured claim-source mappings make provenance a first-class output alongside the claim itself. The synthesis agent receives structured intermediates — not raw text — and is instructed to preserve the mappings. Footnotes (A) are a display mechanism, not a data structure; they work for humans but break programmatic validation. Post-hoc vector store lookup (C) is fragile — you need to re-match claims to sources. Retroactive citation (D) is unreliable because the specific claim may not map cleanly to any single source.",
+    "background": "Provenance loss is a critical failure mode in research synthesis systems. When subagents return raw text, the synthesis agent compresses it into flowing prose and attribution is lost. Structured intermediates that explicitly link each claim to its source, date, and confidence solve this at the data level. The key design principle: attribution must be carried through the entire pipeline as a data field, not reconstructed after the fact.",
+    "refs": [
+      {
+        "label": "Multi-agent research systems",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "domain": "Context Management & Reliability",
+    "text": "A long-running multi-agent pipeline fails after 2 hours. The team can tell the coordinator crashed but cannot determine which of 12 subagents completed successfully. They must restart from scratch. What state management pattern enables partial restart?",
+    "options": [
+      "Log all API requests and responses to a central monitoring service for post-mortem analysis",
+      "Set a timeout on each subagent and mark it complete if no error was received within the window",
+      "Each subagent writes <code>{\"status\": \"completed\", \"key_findings\": [...], \"coverage\": [...]}</code> to <code>agent-state/{agent_name}.json</code> on success; on restart, the coordinator checks these files and skips completed agents",
+      "Use a database transaction that commits all 12 subagent results atomically at the end"
+    ],
+    "answer": 2,
+    "pattern": "Structured State Files for Partial Restart",
+    "explanation": "Per-subagent state files enable partial restart: on re-run, the coordinator checks which <code>.json</code> files exist, skips those agents, and only re-runs the incomplete ones. Monitoring logs (A) are for observability and post-mortems, not recovery — you still restart from scratch. Atomic database transactions (C) are all-or-nothing: if the coordinator crashes before all 12 complete, nothing is committed. Timeouts (D) can detect stuck subagents but don't help the coordinator know which completed successfully.",
+    "background": "Checkpoint-based recovery transforms total restarts into partial restarts. Each subagent acts as a checkpoint: it completes its work, writes its findings to a durable location, and signals completion. On coordinator restart, completed checkpoints are skipped. This pattern is directly analogous to checkpoint/restart in distributed computing. The state file should be written atomically (write to temp, then rename) to avoid partial files from crashes during the write itself.",
+    "refs": [
+      {
+        "label": "Reliability patterns in agentic systems",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 54,
+    "domain": "Context Management & Reliability",
+    "text": "A 60-turn customer support session approaches context limits. During compression, specific values — order number, exact refund amount, resolution deadline — are lost, causing downstream errors. What pattern preserves these through compression?",
+    "options": [
+      "Append key facts to the system prompt before each API call",
+      "Reduce the compression ratio to preserve more conversation detail",
+      "Save key facts to a database and retrieve them via tool call when needed",
+      "Maintain a <code>=== CASE FACTS ===</code> block at the top of context that is updated in-place but never summarized — only the conversation history below it is compressed"
+    ],
+    "answer": 3,
+    "pattern": "Explicit Fact Block — Preservation Through Compression",
+    "explanation": "The explicit fact block is placed at the top of context and treated differently from conversation history — it is updated in-place (not summarized) and always kept verbatim. This guarantees specific values survive compression. Database retrieval (A) works but adds latency and complexity. Reducing compression (C) delays but doesn't prevent the problem. System prompt injection (D) works per-call but requires re-injecting on every request and managing fact updates externally.",
+    "background": "Context compression is necessary for long sessions but dangerous for specific factual values. Progressive summarization converts \"Customer's order number is ORD-67890, item damaged in transit, refund amount $89.99\" into \"Customer reported a damaged item.\" The explicit fact block pattern separates durable facts from narrative history: facts live in a structured block that compresses to exactly itself (no summarization), while conversation history is compressed normally. The block is updated when new facts emerge, not summarized.",
+    "refs": [
+      {
+        "label": "Context management in long sessions",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "domain": "Context Management & Reliability",
+    "text": "A customer support system escalates based on: (1) sentiment score &lt; 0.3, (2) model self-confidence &lt; 5/10, (3) explicit \"I want to speak to a manager.\" Post-launch: 68% of escalations are false positives driven by signals 1 and 2. What is the correct redesign?",
+    "options": [
+      "Calibrate the sentiment threshold to 0.15 and confidence threshold to 3/10 to reduce false positives",
+      "Keep explicit requests (signal 3) and clear policy gaps as primary triggers; remove sentiment and self-confidence signals, which are unreliable proxies",
+      "Remove all automated signals — escalate only on explicit customer request",
+      "Add a confirmation step: ask the customer \"Would you like to speak with a human?\" before every escalation"
+    ],
+    "answer": 1,
+    "pattern": "Escalation Trigger Reliability",
+    "explanation": "Sentiment scores proxy emotional state but emotional state doesn't reliably indicate when human intervention is needed — frustrated customers often just need their issue resolved. Model self-confidence is unreliable and can be confidently wrong. The reliable triggers are: explicit customer request, situations not covered by policy, and inability to progress after genuine attempts. Recalibrating thresholds (A) reduces false positives slightly but doesn't fix the underlying unreliability. Removing all automation (B) overcorrects — explicit requests should trigger immediately. Confirmation for all escalations (D) adds friction even when the customer explicitly asked.",
+    "background": "Escalation calibration is one of the hardest reliability challenges in customer support agents. Sentiment-based escalation suffers from a fundamental problem: negative sentiment correlates with customer state, not with whether the problem requires human expertise. A customer can be very upset about a simple issue that the agent can resolve, or calm about a complex situation that genuinely needs human judgment. Escalation triggers should be based on request type and policy boundaries, not inferred emotional state.",
+    "refs": [
+      {
+        "label": "Human-in-the-loop patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "domain": "Context Management & Reliability",
+    "text": "A support agent escalates by passing the full 52-turn conversation transcript to the human agent. Human agents spend 10–15 minutes reading context before helping. What is the correct escalation handoff design?",
+    "options": [
+      "Pass only the customer's most recent message so the human can assess the situation directly",
+      "Pass a structured JSON payload with only the decision-relevant fields: <code>customer_id</code>, <code>issue_summary</code>, <code>actions_taken</code>, <code>recommended_action</code>, <code>escalation_reason</code>",
+      "Summarize the conversation to the 10 most recent turns",
+      "Create a bullet-point summary of the conversation for the human agent"
+    ],
+    "answer": 1,
+    "pattern": "Structured Escalation Handoff",
+    "explanation": "A structured JSON handoff contains exactly what the human needs to take action — no more, no less. It enables the human to help the customer in under 60 seconds by surfacing the situation and recommended action immediately. A 10-turn summary (A) is still verbose and requires reading. Bullet points (C) are better than transcripts but unstructured. The most recent message only (D) loses all context about what was already tried — the human would need to ask the customer to re-explain.",
+    "background": "Escalation handoff design directly impacts customer experience and human agent efficiency. The goal is not to transfer the conversation — it's to transfer the decision context. Human agents need: who is the customer, what is the problem, what was already tried, and what action is recommended. A structured payload with these specific fields enables instant context comprehension. The 47-turn transcript that took the agent 5 minutes to process is not valuable to a human who needs to act in 60 seconds.",
+    "refs": [
+      {
+        "label": "Escalation patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 57,
+    "domain": "Context Management & Reliability",
+    "text": "A regulatory document analysis pipeline consistently misses critical dates and percentages from sections 3–5 of 10-section documents, while sections 1–2 and 9–10 are extracted accurately. No changes were made to the prompt. What is the cause and fix?",
+    "options": [
+      "Sections 3–5 contain denser legal language that requires more attention capacity",
+      "This is the lost-in-the-middle effect — models reliably process content at the start and end of long inputs but degrade in the middle. Fix: process sections in independent passes, or restructure input to place critical content at the boundaries",
+      "Use <code>temperature: 0</code> to force uniform attention across all sections",
+      "The model's attention degrades specifically after processing more than 5 sections — split documents at section 5"
+    ],
+    "answer": 1,
+    "pattern": "Lost-in-the-Middle Mitigation",
+    "explanation": "The lost-in-the-middle effect is a well-documented phenomenon where model attention reliably degrades for content in the middle of long contexts. The symptom matches exactly: start and end sections are accurate, middle sections degrade. The fix is positional: process sections in independent passes (each section gets full attention in its own context), or restructure by placing the most critical content at the start or end. The cause is positional, not content-related (A). The threshold (C) is not exactly 5 sections — it depends on total context length. Temperature (D) doesn't affect positional attention patterns.",
+    "background": "The lost-in-the-middle effect occurs because transformer attention tends to weight tokens near the start and end of the context window more heavily than tokens in the middle. For long documents, this means critical information buried in the middle receives less reliable extraction. Mitigation strategies: (1) process long documents in sections with independent context windows, (2) summarize sections and place summaries at the start of context before the full document, (3) use a sliding window approach that processes the document in overlapping chunks.",
+    "refs": [
+      {
+        "label": "Context window management",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 58,
+    "domain": "Context Management & Reliability",
+    "text": "A research agent finds two conflicting values: Source A (March 2024): \"12% of streaming music is AI-generated.\" Source B (September 2024): \"8%.\" How should the agent represent this in the final report?",
+    "options": [
+      "Preserve both values with sources and dates, flag the conflict, and note a plausible explanation: <code>{\"conflict_detected\": true, \"values\": [{\"value\": \"12%\", \"source\": \"A\", \"date\": \"2024-03\"}, {\"value\": \"8%\", \"source\": \"B\", \"date\": \"2024-09\"}], \"possible_explanation\": \"Different methodology or market change over 6 months\"}</code>",
+      "Average the two figures and report \"approximately 10%\"",
+      "Use the more recent figure (8%) — it supersedes the older one",
+      "Flag the conflict and refuse to report any figure until a human resolves it"
+    ],
+    "answer": 0,
+    "pattern": "Multi-Document Conflict Resolution",
+    "explanation": "Preserving both values with full provenance is the correct approach: the reader gets the data and can make their own judgment. Silently using the newer value (A) discards information and introduces hidden editorial judgment. Averaging (B) is statistically invalid for different-methodology surveys and creates a fictional number. Refusing to report (D) is too conservative — the agent has useful data and the conflict itself is informative.",
+    "background": "Conflicting data across sources is the rule in real-world research, not the exception. Different studies use different methodologies, different sample populations, different time periods, and different definitions of what they're measuring. The agent's job is not to adjudicate — it's to preserve the full evidentiary record. A conflict_detected flag enables downstream human review while the preserved values ensure no information is discarded. Including a plausible explanation helps readers interpret the discrepancy.",
+    "refs": [
+      {
+        "label": "Information provenance and reliability",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 59,
+    "domain": "Context Management & Reliability",
+    "text": "A customer support agent is resumed 8 hours after a session was paused. The history contains a <code>lookup_order</code> tool result: \"Status: In Transit, ETA: 2 hours\" — from 8 hours ago. The agent tells the customer their order arrives \"in about 2 hours.\" What session management fix prevents this?",
+    "options": [
+      "Add a system prompt instruction: \"Treat all tool results as potentially stale if the session was paused\"",
+      "Set a TTL on all tool results and automatically invalidate them after 1 hour",
+      "On session resume, programmatically strip all previous <code>tool_result</code> messages from history while keeping human/assistant turns — forcing the agent to re-fetch current data before responding",
+      "Re-execute all tool calls from the previous session at resume time to refresh cached data"
+    ],
+    "answer": 2,
+    "pattern": "Programmatic tool_result Strip on Resume",
+    "explanation": "Stripping <code>tool_result</code> messages on resume forces the agent to treat all data as unknown and re-fetch before making claims. The conversation history (human/assistant turns) is preserved for continuity. TTL (A) requires infrastructure to track result age and doesn't help if the TTL logic fails. System prompt instructions (C) are probabilistic — the model may still reference stale results. Re-executing all tool calls (D) has unintended side effects and may execute actions that shouldn't be repeated.",
+    "background": "The session resumption data staleness problem is a specific case of the general challenge that tool results have a temporal validity window. Orders ship, prices change, availability fluctuates. When resuming an async session, the safest approach is to assume all tool results are stale: strip them from history (preventing the model from referencing them) and let the model re-fetch data as needed to respond to the customer's current question. This ensures customers always receive current information.",
+    "refs": [
+      {
+        "label": "Session management and stale data",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 60,
+    "domain": "Context Management & Reliability",
+    "text": "A main agent is asked to understand the authentication architecture of a 600-file codebase. If it loads files directly, it will exhaust its context window before producing useful output. What is the correct pattern?",
+    "options": [
+      "Delegate the exploration to an Explore subagent via the <code>Task</code> tool — the subagent loads all needed files in its own isolated context and returns a concise structured summary. The main agent gets the findings without consuming its context window.",
+      "Ask the agent to load only the 10 most relevant files based on filename guesses",
+      "Use <code>--context-limit</code> flag to prevent the agent from reading more than 20 files",
+      "Start a fresh session for the exploration and manually copy the findings back"
+    ],
+    "answer": 0,
+    "pattern": "Subagent Delegation for Context Protection",
+    "explanation": "The Explore subagent pattern is purpose-built for this: it runs verbose exploration in an isolated context, reads all relevant files, and returns a compact, structured summary to the main agent. The main agent's context receives one summary instead of dozens of raw file contents. Guessing 10 files (A) misses critical files. <code>--context-limit</code> (B) is not a real flag. Manual session-switching (D) is error-prone and breaks flow.",
+    "background": "Context window management in large codebase work requires architectural separation between exploration and action. The Explore subagent absorbs the token cost of loading and analyzing many files. Its output — a structured summary of key findings — is compact and information-dense. The main agent uses this summary to reason and plan without its context being consumed by raw file data. This is the correct pattern for any investigation that requires reading significantly more files than the main agent's context can accommodate alongside its other work.",
+    "refs": [
+      {
+        "label": "Context management with subagents",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 61,
+    "domain": "Tool Design & MCP Integration",
+    "text": "An agent is connected to 15 MCP servers exposing a total of 800 tools. Loading all tool definitions upfront consumes over 150K tokens before the agent even reads the user's request. Which production pattern should the architect adopt to reduce token consumption while maintaining access to all tools?",
+    "pattern": "Code-Execution-with-MCP Token Reduction",
+    "explanation": "Code-execution-with-MCP is Anthropic's documented pattern where agents write code to call MCP tools instead of direct tool calls, achieving up to 98.7% token reduction. Increasing max_tokens doesn't solve the cost/latency problem. Splitting across conversations loses cross-server context. Compressing descriptions degrades tool selection accuracy.",
+    "background": "As MCP usage scales to hundreds or thousands of tools, loading all definitions upfront creates significant cost and latency. The code-execution-with-MCP pattern has agents write code against MCP server file APIs, loading tools on-demand and filtering data in the execution environment rather than passing everything through context.",
+    "refs": [
+      {
+        "label": "Code execution with MCP",
+        "url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      }
+    ],
+    "options": [
+      "Split the 800 tools across multiple sequential conversations, processing each server's tools in a separate turn",
+      "Use code-execution-with-MCP: have the agent write code against MCP server APIs, discovering and loading tools on-demand rather than upfront",
+      "Compress tool descriptions using abbreviations and remove parameter documentation to reduce token count",
+      "Increase the model's max_tokens to accommodate all 800 tool definitions in a single context window"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 62,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "In the MCP architecture, which component is responsible for enforcing security policies, controlling client connection permissions, and managing user authorization decisions?",
+    "pattern": "MCP Host Security Enforcement",
+    "explanation": "Per the MCP specification, the Host is the container and coordinator that enforces security policies, controls client connection permissions, handles user authorization decisions, and manages context aggregation. Servers operate independently but must respect security constraints—they don't enforce them. Clients handle protocol negotiation but don't own security policy. There is no separate authorization middleware in the MCP architecture.",
+    "background": "MCP follows a client-host-server architecture. The Host creates and manages multiple Client instances, each with a 1:1 relationship to a Server. Security is centralized in the Host, which enforces boundaries and ensures Servers cannot see the full conversation or other servers' data.",
+    "refs": [
+      {
+        "label": "MCP Architecture",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "The Host process",
+      "Each individual MCP Server",
+      "The MCP Client that connects to the server",
+      "A dedicated MCP authorization middleware layer"
+    ],
+    "answer": 0
+  },
+  {
+    "id": 63,
+    "domain": "Tool Design & MCP Integration",
+    "text": "An MCP server exposes a <code>search_tools</code> capability. To support progressive tool discovery, the server should offer multiple detail levels. Which set of detail levels aligns with the recommended progressive disclosure pattern?",
+    "pattern": "Progressive Tool Discovery Detail Levels",
+    "explanation": "The progressive disclosure pattern for tool discovery recommends offering name-only, name+description, and full schema detail levels so agents load only what they need. Category listing with counts doesn't help the model select tools. Always returning full schema defeats the purpose of progressive discovery. Hash-based lookups add unnecessary complexity and don't reduce token consumption.",
+    "background": "Progressive tool discovery organizes tools as filesystem-based code files and supports search_tools with graduated detail levels. This lets agents start with lightweight name-only results, drill into descriptions for promising matches, and only load full schemas for tools they intend to call.",
+    "refs": [
+      {
+        "label": "Code execution with MCP",
+        "url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      }
+    ],
+    "options": [
+      "Hashed tool IDs, description lookup by hash, and schema download by hash",
+      "Name-only, name-plus-description, and full schema",
+      "Category listing, tool count per category, and random sample of tools",
+      "Full schema always, with optional field-level filtering on the client side"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 64,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "In the MCP specification, what is the relationship between an MCP Client and an MCP Server?",
+    "pattern": "MCP Client-Server 1:1 Stateful Session",
+    "explanation": "The MCP specification explicitly states each client has a 1:1 relationship with a particular server, maintaining one stateful session. The Host creates multiple clients when connecting to multiple servers. Multiplexing, connection pooling, and stateless communication all contradict the specified architecture.",
+    "background": "MCP uses a client-host-server architecture where the Host creates and manages multiple Client instances. Each Client establishes one stateful session per Server, handles protocol negotiation and capability exchange, and maintains security boundaries between servers.",
+    "refs": [
+      {
+        "label": "MCP Architecture",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "Multiple Clients share a single pooled connection to each Server for efficiency",
+      "Each Client can connect to multiple Servers simultaneously through multiplexed sessions",
+      "Each Client maintains exactly one stateful session with one Server (1:1 relationship)",
+      "Clients and Servers communicate through stateless request-response exchanges with no persistent session"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 65,
+    "domain": "Context Management & Reliability",
+    "text": "An MCP server needs to access a user's personal preferences to customize its responses, but this information isn't available in the initial request. According to the November 2025 MCP spec, which feature allows the server to request this information directly from the user?",
+    "pattern": "MCP Elicitation for User Input",
+    "explanation": "Elicitation is a client feature in the 2025-11-25 spec that enables server-initiated requests for additional information from users. Sampling is for server-initiated LLM interactions, not direct user input. Roots expose URI/filesystem boundaries, not user preferences. Prompts are templated messages exposed by servers, not a mechanism for requesting runtime user input.",
+    "background": "The November 2025 MCP spec introduced Elicitation as a client feature. It allows servers to request additional information directly from users through the client, enabling secure out-of-band interactions when the server needs data not available in the initial context.",
+    "refs": [
+      {
+        "label": "MCP Specification",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25"
+      },
+      {
+        "label": "MCP Anniversary Release",
+        "url": "https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/"
+      }
+    ],
+    "options": [
+      "Prompts — using a templated workflow that pre-fills user preference fields",
+      "Elicitation — a server-initiated request for additional information from users",
+      "Sampling — having the server invoke the LLM to generate the user's preferences",
+      "Roots — querying the client for filesystem boundaries containing user config files"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 66,
+    "domain": "Tool Design & MCP Integration",
+    "text": "An MCP server provides long-running operations that may take minutes to complete. According to the November 2025 MCP specification, which feature should the server use to let clients track the status of these operations?",
+    "pattern": "MCP Tasks for Async Operations",
+    "explanation": "The 2025-11-25 spec introduced Tasks specifically for async operation tracking with status queries. While notifications/progress tracking exist as utilities, Tasks are the dedicated feature for long-running operations. Manual polling is not a protocol feature. Sampling is for server-initiated LLM interactions, unrelated to operation tracking.",
+    "background": "The November 2025 MCP specification release added Tasks to support task-based workflows. Tasks provide a structured way to track asynchronous operations, allowing clients to query status and receive updates for long-running server operations.",
+    "refs": [
+      {
+        "label": "MCP Anniversary Release",
+        "url": "https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/"
+      }
+    ],
+    "options": [
+      "Tasks — async operation tracking with status queries",
+      "Sampling — letting the server invoke the LLM to estimate remaining time",
+      "Polling the tool result endpoint with the original request ID at fixed intervals",
+      "Notifications — periodic progress events streamed over the session"
+    ],
+    "answer": 0
+  },
+  {
+    "id": 67,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A developer argues that MCP servers should have access to the full conversation history so they can provide more contextual responses. Why does the MCP architecture explicitly prevent this?",
+    "pattern": "MCP Server Conversation Isolation",
+    "explanation": "MCP's design principles explicitly state that servers should not read the whole conversation or see into other servers. This is a deliberate security and isolation choice enforced by the Host. Token limits are a model concern, not a protocol design reason. JSON-RPC can transmit any data structure. Network latency is irrelevant to the architectural decision.",
+    "background": "MCP's architecture ensures servers are isolated by design. Each server receives only the contextual information necessary for its operation. The full conversation history stays with the Host, which enforces security boundaries and controls all cross-server interactions.",
+    "refs": [
+      {
+        "label": "MCP Architecture",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "The JSON-RPC 2.0 protocol does not support transmitting conversation arrays between endpoints",
+      "Full conversation history would exceed the server's token limit, causing processing failures",
+      "Servers run on separate hardware and network latency makes full history transfer impractical",
+      "Server isolation is a core design principle — servers receive only necessary contextual information, and the Host controls cross-server interactions to enforce security boundaries"
+    ],
+    "answer": 3
+  },
+  {
+    "id": 68,
+    "domain": "Tool Design & MCP Integration",
+    "text": "When connecting an MCP server to an agent, which two transport options does the MCP specification support?",
+    "pattern": "MCP Transport Options",
+    "explanation": "The MCP specification supports stdio (for local processes) and Streamable HTTP (for remote services) as transport options. WebSocket, gRPC, raw TCP, REST, and MQTT are not specified MCP transports. The specification is built on JSON-RPC 2.0 with these two specific transport mechanisms.",
+    "background": "MCP provides two transport mechanisms: stdio for local process communication (ideal for development and local integrations) and Streamable HTTP for remote services. The 2026 roadmap addresses scaling challenges with Streamable HTTP for load balancers and horizontal scaling.",
+    "refs": [
+      {
+        "label": "MCP Specification",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25"
+      }
+    ],
+    "options": [
+      "WebSocket for bidirectional streaming and gRPC for high-performance RPC",
+      "HTTP REST for synchronous calls and MQTT for asynchronous event-driven communication",
+      "stdio for local processes and Streamable HTTP for remote services",
+      "stdio for local processes and raw TCP sockets for remote services"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 69,
+    "domain": "Tool Design & MCP Integration",
+    "text": "An MCP client receives tool annotations and descriptions from a third-party MCP server. How should the client treat these annotations from a security perspective?",
+    "pattern": "MCP Tool Annotation Trust Model",
+    "explanation": "MCP security principles state that tool annotations and descriptions are considered untrusted unless from a trusted server. The protocol does not validate annotation content during negotiation. There is no Registry-based checksum verification. Ignoring annotations entirely would lose useful metadata; the correct approach is to treat them as untrusted and validate accordingly.",
+    "background": "MCP requires explicit user consent for all data access and tool execution. Tool annotations and descriptions from servers are treated as potentially untrusted input. The Host and Client must apply appropriate security scrutiny, especially for third-party servers, as these could contain misleading information.",
+    "refs": [
+      {
+        "label": "MCP Specification",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25"
+      }
+    ],
+    "options": [
+      "Treat them as untrusted unless the server is explicitly trusted — tool annotations and descriptions could be manipulated",
+      "Ignore all annotations and rely solely on the tool's function signature for security",
+      "Trust them implicitly since the MCP protocol validates all annotations during capability negotiation",
+      "Hash and verify them against a central MCP Registry checksum before use"
+    ],
+    "answer": 0
+  },
+  {
+    "id": 70,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "During MCP session initialization, both client and server exchange information about their supported features. What is this process called, and when must both parties respect the declared capabilities?",
+    "pattern": "MCP Capability Negotiation Lifecycle",
+    "explanation": "MCP uses capability negotiation at initialization where servers declare supported features (resource subscriptions, tools, prompts) and clients declare theirs (sampling, roots, elicitation). Both must respect declared capabilities throughout the session. Capabilities are not renegotiable mid-session, servers cannot silently add capabilities, and this is a protocol-level concern, not transport-layer.",
+    "background": "Capability negotiation is a core part of MCP's lifecycle. At session initialization, both client and server declare what features they support. This creates a contract for the session — neither party should use features the other hasn't declared support for, ensuring predictable and safe interactions.",
+    "refs": [
+      {
+        "label": "MCP Architecture",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "Protocol binding — capabilities are locked at the transport layer and cannot change per session",
+      "Capability negotiation — both must respect declared capabilities throughout the entire session",
+      "Feature discovery — the server can dynamically add capabilities without notifying the client",
+      "Handshake verification — capabilities can be renegotiated at any point during the session"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 71,
+    "domain": "Tool Design & MCP Integration",
+    "text": "An MCP server exposes a <code>search_tools</code> capability that returns tool information at three detail levels: name-only, name+description, and full schema. What production pattern does this implement, and what is its primary benefit?",
+    "pattern": "search_tools Detail Level Filtering",
+    "explanation": "Progressive tool discovery organizes tools so agents can search by name first, then selectively load full schemas only for tools they intend to use. This directly reduces token consumption from tool definitions. Lazy registration is wrong because tools already exist on the server. Tool caching is a client optimization not described by this pattern. Capability negotiation happens at session init and concerns feature support, not granular tool schema retrieval.",
+    "background": "As agents connect to dozens of MCP servers with hundreds or thousands of tools, loading all definitions upfront overwhelms the context window. The progressive discovery pattern uses a search_tools interface with detail levels (name-only, name+description, full schema) so agents can incrementally discover and load only what they need.",
+    "refs": [
+      {
+        "label": "Code execution with MCP — Progressive Discovery",
+        "url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      }
+    ],
+    "options": [
+      "Capability negotiation — the client and server agree on which tools are available during initialization",
+      "Tool caching — previously used tool schemas are stored client-side to avoid repeat fetches",
+      "Progressive tool discovery — agents load only the tool definitions they need, reducing context window consumption",
+      "Lazy tool registration — servers defer tool creation until the agent first invokes them"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 72,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "In the MCP architecture, which component is responsible for enforcing security policies, handling user authorization decisions, and controlling cross-server interactions?",
+    "pattern": "Host as Security Policy Enforcer",
+    "explanation": "The MCP specification explicitly states the host process acts as the container and coordinator that enforces security policies, consent requirements, and controls cross-server interactions. Clients maintain isolated sessions but do not independently enforce security policy — the host does. There is no concept of a 'highest privilege server' or a dedicated authorization server in the MCP architecture.",
+    "background": "MCP follows a client-host-server architecture. The host creates and manages multiple clients, each with a 1:1 server relationship. The host is the security boundary enforcer — it controls permissions, user consent, and coordinates AI/LLM integration. Servers are intentionally isolated from each other and from the full conversation.",
+    "refs": [
+      {
+        "label": "MCP Architecture Specification",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "The host process",
+      "A dedicated MCP authorization server defined in the protocol",
+      "Each MCP client independently",
+      "The MCP server with the highest privilege level"
+    ],
+    "answer": 0
+  },
+  {
+    "id": 73,
+    "domain": "Context Management & Reliability",
+    "text": "An agent connected to 15 MCP servers loads all tool definitions upfront into the context window. With approximately 10,000 tokens per server in tool definitions, the agent consumes 150,000 tokens before reading the user's request. Which architectural change achieves the largest token reduction?",
+    "pattern": "Code-Execution Token Reduction Architecture",
+    "explanation": "The code-execution-with-MCP pattern achieves up to 98.7% token reduction (150K → 2K) by having agents write code that loads tool schemas on-demand in a sandbox rather than injecting all definitions into context. Prompt caching reduces cost but does not remove tokens from the context window. Splitting across turns breaks the agent's ability to reason about all tools simultaneously. Compressing descriptions degrades tool selection accuracy.",
+    "background": "When agents connect to many MCP servers, direct tool calling forces all definitions into context upfront. The code-execution approach lets agents write programs that import and call MCP tools dynamically, filtering data inside the execution environment rather than passing intermediate results through the context window.",
+    "refs": [
+      {
+        "label": "Code execution with MCP",
+        "url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      }
+    ],
+    "options": [
+      "Compress tool descriptions to shorter strings and remove parameter documentation",
+      "Have the agent write code that calls MCP tools programmatically in a sandbox, loading tool schemas on-demand within the execution environment",
+      "Enable prompt caching so tool definitions are stored outside the context window entirely",
+      "Split the tool definitions across multiple turns so only 3 servers are loaded per turn"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 74,
+    "domain": "Tool Design & MCP Integration",
+    "text": "An MCP server needs to perform a long-running data migration that takes several minutes. The November 2025 MCP specification introduced a feature specifically for this use case. Which feature should the server use?",
+    "pattern": "MCP Tasks for Long-Running Operations",
+    "explanation": "The November 2025 spec introduced Tasks specifically for async operation tracking with status queries, which is the correct mechanism for long-running operations. Sampling is for server-initiated LLM interactions, not progress tracking. Elicitation is for requesting user input, not status reporting. Resource subscriptions could notify about changes but are not designed as an async operation tracking mechanism.",
+    "background": "The November 2025 MCP specification release added Tasks as a first-class primitive for tracking asynchronous operations. Tasks allow servers to accept a request, return a task ID, and let clients query status over time — essential for operations that exceed typical request-response timeouts.",
+    "refs": [
+      {
+        "label": "MCP November 2025 Spec Release",
+        "url": "https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/"
+      }
+    ],
+    "options": [
+      "Resources with subscriptions — publishing migration status as a resource URI",
+      "Tasks — allowing the server to report async operation status that clients can query",
+      "Elicitation — prompting the user for confirmation at each migration step",
+      "Sampling — requesting the client's LLM to monitor the migration progress"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 75,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "A developer wants Server A to access data from Server B in an MCP deployment. According to MCP's design principles, how should this cross-server interaction be handled?",
+    "pattern": "Server Isolation Cross-Server Mediation",
+    "explanation": "MCP's design principles explicitly state that servers cannot see into other servers and that cross-server interactions are controlled by the host. Server A cannot directly query Server B — the host mediates. Sampling lets servers request LLM interactions through the client, not query other servers. Servers don't share sessions. Clients maintain isolated 1:1 connections and don't automatically forward between each other.",
+    "background": "MCP enforces strict server isolation as a core design principle. Each server receives only necessary contextual information, full conversation history stays with the host, and cross-server interactions must be controlled by the host process. This ensures security boundaries are maintained.",
+    "refs": [
+      {
+        "label": "MCP Architecture — Design Principles",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "Server A can use the Sampling feature to query Server B's tools directly",
+      "The client connected to Server A can forward requests to Server B's client automatically",
+      "The host process must mediate all cross-server interactions; servers cannot directly communicate with each other",
+      "Server A should subscribe to Server B's resources using a shared session token"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 76,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "An agent uses code execution to interact with MCP servers. Instead of passing raw query results (120K tokens) through the context window, it filters and aggregates data within the sandbox. The final summary returned to the model is 1.5K tokens. What is this technique called?",
+    "pattern": "In-Environment Data Filtering",
+    "explanation": "In-environment data filtering means the agent's code processes, filters, and aggregates data within the execution sandbox, returning only a small summary to the model context. This is distinct from prompt caching (a billing optimization), context compaction (model self-summarization), and tool result stripping (removing previous turn data from API calls).",
+    "background": "When agents execute code against MCP servers, they can perform data transformations, filtering, and aggregation inside the sandbox environment. Only the final processed result enters the context window, dramatically reducing token consumption compared to passing all intermediate tool results through the model.",
+    "refs": [
+      {
+        "label": "Code execution with MCP",
+        "url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      }
+    ],
+    "options": [
+      "Prompt caching — storing intermediate results so they don't count against the context window",
+      "Tool result stripping — removing tool_result blocks from previous turns before the next API call",
+      "In-environment data filtering — processing and reducing data inside the execution sandbox before returning results to the model",
+      "Context compaction — having the model summarize its own conversation history"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 77,
+    "domain": "Tool Design & MCP Integration",
+    "text": "According to the MCP specification, which statement correctly describes the relationship between MCP clients and servers?",
+    "pattern": "Client-Server Session Topology",
+    "explanation": "The MCP spec explicitly states each client has a 1:1 relationship with a particular server, establishing one stateful session. Clients do not multiplex across servers — the host creates multiple clients for multiple servers. The protocol is stateful, not stateless. Each server connection is isolated; servers don't share state across client sessions.",
+    "background": "MCP uses a 1:1 client-server session model. A host application creates multiple client instances, each connecting to exactly one server. Sessions are stateful with capability negotiation at initialization. This design maintains security isolation between servers while allowing the host to aggregate context from all connections.",
+    "refs": [
+      {
+        "label": "MCP Architecture — Clients",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "Clients and servers communicate over stateless HTTP requests with no persistent session",
+      "Each client maintains a 1:1 stateful session with a single server",
+      "A single server manages sessions for all clients in the host, sharing state between them",
+      "Each client can connect to multiple servers simultaneously through multiplexed sessions"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 78,
+    "domain": "Context Management & Reliability",
+    "text": "An MCP-connected agent processes a user request that requires calling 8 different tools sequentially via direct tool calls. Each tool result averages 15K tokens. By the 8th call, the context window contains over 120K tokens of intermediate results the model no longer needs. What is the most effective mitigation?",
+    "pattern": "Chained Tool Call Context Bloat Mitigation",
+    "explanation": "The code-execution pattern eliminates intermediate result bloat by running all tool calls in a sandbox and returning only the final output. Increasing max_tokens doesn't reduce context consumption — it controls output length. Prompt caching reduces cost but tokens still occupy the context window and affect latency. System prompts cannot make the model truly ignore tokens already in its context.",
+    "background": "Sequential direct tool calls accumulate all intermediate results in the context window, degrading performance as the conversation grows. The code-execution-with-MCP pattern solves this by having the agent write code that chains tool calls in a sandbox, keeping intermediate data out of the context entirely.",
+    "refs": [
+      {
+        "label": "Code execution with MCP — Token Consumption",
+        "url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      }
+    ],
+    "options": [
+      "Insert a system prompt instructing the model to ignore previous tool results",
+      "Use prompt caching to make the intermediate results free of charge",
+      "Switch to a code-execution pattern where the agent writes a script that chains all 8 tool calls, returning only the final result to the context",
+      "Increase the model's max_tokens parameter to accommodate the growing context"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 79,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "According to MCP's design principles, where does the full conversation history reside?",
+    "pattern": "Conversation History Host Residency",
+    "explanation": "The MCP specification explicitly states 'Full conversation history stays with the host' and servers receive only necessary contextual information. Distributing history across servers violates the isolation principle. Clients route messages but don't independently manage conversation history — the host does. There is no shared memory resource concept in MCP.",
+    "background": "MCP's security model ensures servers are isolated and receive minimal context. The host retains the full conversation history and determines what information each server needs. This prevents data leakage between servers and ensures the host maintains control over the user's conversation.",
+    "refs": [
+      {
+        "label": "MCP Architecture — Design Principles",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "In the client, which selectively replays relevant turns to the server",
+      "Distributed across all connected servers so each can maintain full context",
+      "In a shared memory resource that all servers can subscribe to",
+      "With the host — servers receive only the necessary contextual information for their specific task"
+    ],
+    "answer": 3
+  },
+  {
+    "id": 80,
+    "domain": "Tool Design & MCP Integration",
+    "text": "The November 2025 MCP specification introduced <em>Elicitation</em> as a client feature. What does Elicitation enable?",
+    "pattern": "MCP Elicitation Client Feature Purpose",
+    "explanation": "The MCP spec defines Elicitation as a client feature that enables server-initiated requests for additional information from users. It is mediated through the client, not direct server-to-user communication. It is not server-to-server communication (which violates isolation). It is not client-initiated model clarification. It has nothing to do with automatic schema generation.",
+    "background": "Elicitation was added in the November 2025 MCP spec as a client feature. It allows servers to request user input when they need additional information to complete a task. The host/client mediates these requests, maintaining security boundaries while enabling interactive server workflows.",
+    "refs": [
+      {
+        "label": "MCP Specification — Elicitation",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25"
+      },
+      {
+        "label": "MCP Anniversary — Elicitation",
+        "url": "https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/"
+      }
+    ],
+    "options": [
+      "Client-initiated prompts that ask the model to clarify ambiguous tool parameters",
+      "Automatic schema generation for tools based on runtime parameter inspection",
+      "Server-initiated requests for additional information from the user, mediated through the client",
+      "Server-to-server communication for exchanging resource data across sessions"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 81,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "You are building a multi-agent system where a coordinator spawns several subagents. After all subagents return results, the coordinator must synthesize them into a final answer. One subagent returns a contradictory result compared to the others. What is the recommended production pattern for handling this?",
+    "pattern": "Contradiction Arbitration via Verification Subagent",
+    "explanation": "The correct answer uses a dedicated verification subagent with fresh context to independently evaluate the contradictory claim, avoiding bias from prior results. Discarding outliers silently loses potentially correct information. Re-running all subagents is wasteful when only one result is suspect. Passing raw contradictions to users without any resolution violates the principle that agents should handle complexity and only escalate when truly ambiguous.",
+    "background": "In multi-agent orchestration, contradictory subagent results are expected. A robust coordinator delegates contradiction resolution to a verification step with isolated context, ensuring the contradictory result is evaluated on its merits rather than majority-ruled away or blindly forwarded.",
+    "refs": [
+      {
+        "label": "Claude Agent SDK — Core Concepts",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/core-concepts"
+      }
+    ],
+    "options": [
+      "Re-run all subagents from scratch to eliminate the inconsistency",
+      "Pass all results including the contradiction directly to the user and let them decide",
+      "Have the coordinator invoke a dedicated verification subagent that re-examines the contradictory result with fresh context before synthesis",
+      "Automatically discard the outlier result and synthesize only the agreeing subagent outputs"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 82,
+    "domain": "Tool Design & MCP Integration",
+    "text": "An MCP server exposes a tool that queries a large database and returns up to 50,000 rows. In production, agents calling this tool experience high latency and context overflow. According to MCP best practices, what is the most effective architectural fix?",
+    "pattern": "Server-Side Pagination and Filtering",
+    "explanation": "Server-side filtering and pagination let the agent request precise data slices, minimizing token usage and latency. Increasing max_tokens doesn't help because the problem is context window bloat from tool results, not generation limits. Caching 50K rows in conversation history makes the problem worse by consuming the entire context window. Splitting into 50 tools creates tool definition bloat and doesn't reduce total data transferred.",
+    "background": "MCP tool design should follow the principle of returning minimal, targeted data. Tools that return large payloads should support filtering parameters and pagination so agents can iteratively retrieve only the information needed for their current task.",
+    "refs": [
+      {
+        "label": "Code execution with MCP — efficient agents",
+        "url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      },
+      {
+        "label": "MCP Tools Specification",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25"
+      }
+    ],
+    "options": [
+      "Have the agent call the tool once and cache all 50,000 rows in the conversation history for subsequent queries",
+      "Split the single tool into 50 separate tools, each returning 1,000 rows",
+      "Add server-side filtering and pagination parameters to the tool so the agent requests only the data it needs per call",
+      "Increase the model's max_tokens to accommodate the larger response payload"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 83,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "Your team uses Claude Code across multiple repositories. You want to define a shared set of coding standards that apply to <em>every</em> repository any team member works on, but individual repositories should be able to override specific rules. Where should you place the shared standards?",
+    "pattern": "User-Level Global Defaults with Project Override",
+    "explanation": "The user-level ~/.claude/CLAUDE.md applies to all repositories a developer works on and can be selectively overridden by project-level CLAUDE.md files, providing the layered inheritance the question requires. Git submodules add unnecessary complexity and aren't natively supported for CLAUDE.md sharing. System prompt configuration via environment variables isn't how Claude Code applies persistent coding standards. Duplicating the file across repositories creates maintenance burden and drift.",
+    "background": "Claude Code supports a hierarchy of CLAUDE.md files: user-level (~/.claude/CLAUDE.md) applies globally as defaults, while project-level and directory-level CLAUDE.md files can override or extend those defaults for specific contexts.",
+    "refs": [
+      {
+        "label": "Claude Code — CLAUDE.md Configuration",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/claude-code"
+      }
+    ],
+    "options": [
+      "In the user-level <code>~/.claude/CLAUDE.md</code> file, which applies globally but can be overridden by project-level CLAUDE.md files",
+      "In the system prompt of each Claude Code session, configured through environment variables",
+      "In a centralized Git repository that each project imports via a submodule",
+      "In a project-level CLAUDE.md at the root of each repository, duplicated identically"
+    ],
+    "answer": 0
+  },
+  {
+    "id": 84,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "You need Claude to extract a list of action items from meeting transcripts. Sometimes meetings have zero action items. Your JSON schema defines <code>action_items</code> as an array of objects. In testing, Claude occasionally hallucinates action items when none exist. What is the best prompt engineering fix?",
+    "pattern": "Empty-Result Explicit Instruction Guard",
+    "explanation": "Explicitly instructing the model to return an empty array when no items exist and forbidding invention directly addresses the hallucination pattern. Temperature 0 reduces randomness but does not reliably prevent hallucination on extraction tasks. A minimum array length of 1 forces hallucination by requiring at least one item. tool_choice: any forces tool use but doesn't address the content hallucination within the tool's output.",
+    "background": "When extracting structured data, models may fill empty fields or arrays with plausible-sounding content rather than returning empty results. Explicit instructions about the empty case—combined with a directive not to invent content—significantly reduce this failure mode.",
+    "refs": [
+      {
+        "label": "Reduce hallucinations — Claude docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/reduce-hallucinations"
+      },
+      {
+        "label": "Structured outputs — Claude docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+      }
+    ],
+    "options": [
+      "Set the temperature to 0 to eliminate all hallucination",
+      "Use tool_choice: any to force Claude to always call the extraction tool, which prevents hallucination",
+      "Add a minimum array length of 1 in the JSON schema so Claude always provides at least one item",
+      "Add an explicit instruction: \"If no action items are present, return an empty array. Do not invent action items that are not explicitly stated in the transcript.\""
+    ],
+    "answer": 3
+  },
+  {
+    "id": 85,
+    "domain": "Context Management & Reliability",
+    "text": "You are building a long-running agent that processes a 180K token document. After several tool calls, the context window is nearly full. The Claude API returns a response with <code>stop_reason: \"end_turn\"</code> but the agent still has remaining work. What should your orchestration layer do?",
+    "pattern": "Context Compaction for Long-Running Agents",
+    "explanation": "Context compaction summarizes completed work while preserving essential state, freeing context space for remaining work. Increasing max_tokens controls output length, not input context capacity—it won't help when the input context is full. Switching models mid-conversation breaks session continuity and may change behavior. Replaying everything from scratch re-creates the same context pressure and wastes tokens.",
+    "background": "Long-running agents that process large documents or make many tool calls can exhaust their context window. Context compaction—summarizing prior turns, stripping verbose tool results, and preserving only essential state—is the standard pattern for continuing work within context limits.",
+    "refs": [
+      {
+        "label": "Context windows — Claude docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows"
+      },
+      {
+        "label": "Compaction — Claude docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/context-windows#compaction"
+      }
+    ],
+    "options": [
+      "Start a new conversation from scratch, replaying the entire document and all prior tool results",
+      "Use context compaction to summarize completed work and prior tool results, then continue processing with the reduced context",
+      "Switch to a model with a larger context window mid-conversation",
+      "Increase max_tokens on the next request to give the model more room to work"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 86,
+    "domain": "Tool Design & MCP Integration",
+    "text": "You are designing an MCP server that wraps a third-party API requiring OAuth tokens. According to MCP security principles, where should the OAuth token be stored and how should it reach the server?",
+    "pattern": "Host-Managed Credential Flow",
+    "explanation": "MCP's security model requires that sensitive credentials flow through the host's secure credential management, never exposed to the model or included in tool definitions. Including tokens in tool descriptions or resources exposes them to the model context, creating a security risk. Hardcoding tokens in source code is a general security anti-pattern that also makes rotation impossible.",
+    "background": "In the MCP architecture, the host is the security policy enforcer. Credentials for third-party APIs should be managed by the host and injected into server connections through secure channels, ensuring the LLM never sees or handles raw authentication tokens.",
+    "refs": [
+      {
+        "label": "MCP Architecture — Security",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      },
+      {
+        "label": "MCP Authorization",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25"
+      }
+    ],
+    "options": [
+      "Hardcode the token in the MCP server's source code for simplicity",
+      "Store the token in an MCP resource that the model reads and includes in tool call arguments",
+      "Include the token in the tool description so the model can pass it as a parameter with each call",
+      "Store the token in the host application's secure credential store and pass it to the MCP server via the authorized session context, never exposing it to the model"
+    ],
+    "answer": 3
+  },
+  {
+    "id": 87,
+    "domain": "Agentic Architecture & Orchestration",
+    "text": "Your agent must perform a sequence of five tool calls where each call depends on the output of the previous one. You want to minimize latency while ensuring correctness. Which approach is most appropriate?",
+    "pattern": "Sequential Dependency Chain Execution",
+    "explanation": "When each step depends on the previous output, sequential execution within the agent loop is the only correct approach—it ensures each call has its dependency's result. Parallel subagents can't work because later calls need earlier results. Pre-computing arguments is impossible when outputs are unknown until execution. Forcing all five tools simultaneously in one request isn't supported and ignores data dependencies.",
+    "background": "Agent tool call patterns fall into two categories: independent calls that can be parallelized, and dependent chains that must execute sequentially. Attempting to parallelize dependent chains leads to incorrect arguments or failures. The agent loop naturally handles sequential chains by processing each tool result before the next call.",
+    "refs": [
+      {
+        "label": "How the agent loop works",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/agent-sdk/how-the-agent-loop-works"
+      },
+      {
+        "label": "Tool use — Claude docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ],
+    "options": [
+      "Pre-compute all five tool call arguments upfront using a planning step, then execute all five in parallel",
+      "Spawn five parallel subagents, one for each tool call, and merge results at the end",
+      "Execute the calls sequentially in a single agent loop, letting the model chain each tool result into the next call naturally",
+      "Use tool_choice to force all five tools simultaneously in a single API request"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 88,
+    "domain": "Prompt Engineering & Structured Output",
+    "text": "You are using Claude's structured output feature with a strict JSON schema. Your schema includes a <code>category</code> field defined as an enum with values <code>[\"bug\", \"feature\", \"docs\"]</code>. In production, some inputs genuinely don't fit any category. What should you do to handle this correctly?",
+    "pattern": "Enum Graceful Degradation with Detail",
+    "explanation": "Adding an 'other' enum value with a companion detail field lets the model handle edge cases without hallucinating a wrong category, while maintaining schema strictness. Removing the enum loses validation benefits and may produce inconsistent values. Forcing the closest category creates misclassification. Making category optional means downstream systems must handle missing data, complicating processing.",
+    "background": "When using enum fields in structured output schemas, production data inevitably includes edge cases that don't fit predefined categories. The recommended pattern is to include a catch-all enum value paired with a free-text detail field, preserving schema structure while accommodating real-world variety.",
+    "refs": [
+      {
+        "label": "Structured outputs — Claude docs",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs"
+      }
+    ],
+    "options": [
+      "Add an <code>\"other\"</code> value to the enum and include a sibling <code>category_detail</code> string field for the model to explain edge cases",
+      "Add a system prompt instruction saying \"if unsure, pick the closest category\" to force a choice",
+      "Set the category field as optional so the model can omit it when uncertain",
+      "Remove the enum constraint entirely and let the model output any string for category"
+    ],
+    "answer": 0
+  },
+  {
+    "id": 89,
+    "domain": "Claude Code Configuration & Workflows",
+    "text": "Your CI/CD pipeline runs Claude Code in headless mode to review pull requests. You want it to output only a machine-parseable JSON report with no interactive prompts or confirmations. Which combination of flags achieves this?",
+    "pattern": "Headless CI JSON Output Flags",
+    "explanation": "The --print flag runs Claude Code in non-interactive (print) mode, and --output-format json produces machine-parseable JSON output, which is the documented approach for CI/CD pipelines. The other flag combinations use invented or incorrect flag names (--json, --no-interactive, --headless, --batch, --structured-output) that don't exist in Claude Code's CLI interface.",
+    "background": "Claude Code supports a non-interactive 'print' mode via the --print flag, designed for CI/CD integration. Combined with --output-format json, it produces structured JSON output suitable for automated pipeline consumption without requiring user interaction.",
+    "refs": [
+      {
+        "label": "Claude Code — CI/CD Integration",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/claude-code"
+      }
+    ],
+    "options": [
+      "<code>claude --batch --structured-output</code> with the prompt in a CLAUDE.md file",
+      "<code>claude --json --no-interactive</code> with the prompt passed as a command-line argument",
+      "<code>claude --print --output-format json</code> with the review prompt piped via stdin",
+      "<code>claude --headless --format=json</code> with the prompt in an environment variable"
+    ],
+    "answer": 2
+  }
+]

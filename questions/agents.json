@@ -1,0 +1,454 @@
+[
+  {
+    "id": 1,
+    "domain": "Multi-Agent Orchestration",
+    "text": "A legal research pipeline runs 12 subagents sequentially, each searching a different jurisdiction's case database. The full pipeline takes 180 seconds. A peer suggests running all 12 in parallel. Jurisdiction research is fully independent — no subagent depends on another's results. What is the expected outcome and the correct implementation mechanism?",
+    "options": [
+      "Parallel execution reduces latency to ~15 seconds; implement by invoking all 12 subagents via the <code>Task</code> tool in a single coordinator turn before awaiting any results",
+      "Parallel execution is not safe because subagents share context and may overwrite each other's findings",
+      "Parallel execution applies only within a single subagent, not across multiple subagents",
+      "Parallel execution reduces latency but requires the Batch API to avoid rate limits"
+    ],
+    "answer": 0,
+    "pattern": "Parallelization — Independent Subagents",
+    "explanation": "Independent data items are the canonical use case for parallel subagent execution. The coordinator invokes all 12 subagents in a single turn using the <code>Task</code> tool — each runs concurrently in an isolated context. 12 sequential calls at ~15s each = 180s; 12 parallel calls = ~15s (time of the slowest). Subagents do not share context — isolation is by design. The Batch API is for single-step async inference, not multi-step subagent orchestration.",
+    "background": "Subagent parallelism is one of the highest-leverage optimizations in multi-agent pipelines. When tasks are independent (no data dependencies between them), the coordinator can invoke multiple <code>Task</code> tool calls in a single response. The Claude Agent SDK executes these concurrently, with results returned when all complete. This is identical in principle to Promise.all() — the total time is bounded by the slowest task, not the sum. Subagents always have isolated context by design, making parallel execution safe.",
+    "refs": [
+      {
+        "label": "Multi-agent parallelism",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "domain": "Memory & Context Architecture",
+    "text": "A multi-agent pipeline has 8 subagents that each produce research findings. The coordinator passes each subagent's full conversation log to the next subagent for context. By the 5th subagent, input token costs have grown 4× and some subagents are ignoring early findings. What architectural change addresses both problems?",
+    "options": [
+      "Summarize each prior subagent's output before passing it to the next subagent",
+      "Use prompt caching to reduce the cost of repeated context",
+      "Replace the daisy-chain with a shared vector store: each subagent indexes its findings; subsequent subagents retrieve relevant context via semantic search rather than receiving full logs",
+      "Reduce the number of subagents to 4 to keep context manageable"
+    ],
+    "answer": 2,
+    "pattern": "Shared Memory Architecture",
+    "explanation": "Daisy-chaining full conversation logs has exponential token cost — each new subagent receives all prior logs in full. A shared vector store decouples state from invocation: subagents index structured findings to a shared store and retrieve only semantically relevant context for their specific task. This is O(1) context per subagent instead of O(n). Prompt caching reduces cost of repeated tokens but doesn't solve the lost-in-the-middle effect on a 5-subagent conversation chain.",
+    "background": "The daisy-chain anti-pattern: passing accumulated conversation logs between subagents causes token costs to grow as O(n²) (each new subagent receives all prior n logs). A shared vector store separates storage from retrieval: subagents write structured findings (claim, source, confidence) to a shared index; each new subagent queries the index for relevant context using semantic search. Only the most relevant findings enter context — keeping token costs O(1) per subagent regardless of pipeline length.",
+    "refs": [
+      {
+        "label": "Multi-agent memory patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "domain": "Execution & Reliability",
+    "text": "A document processing agent must call <code>extract_metadata</code> before <code>enrich_content</code> on every run. In 12% of cases, the agent calls <code>enrich_content</code> first. Adding system prompt instructions has reduced but not eliminated this. A developer suggests using <code>tool_choice: {\"type\": \"tool\", \"name\": \"extract_metadata\"}</code> on the first API call. Why is this the correct fix?",
+    "options": [
+      "It forces the first API call to invoke <code>extract_metadata</code> at the API level, making the constraint deterministic rather than probabilistic — the model has no choice",
+      "It makes the model aware that extract_metadata should run first",
+      "It removes extract_metadata from the tool list temporarily to prevent confusion",
+      "It sets a default tool preference that the model follows for all subsequent calls"
+    ],
+    "answer": 0,
+    "pattern": "Forcing Execution Order via tool_choice",
+    "explanation": "<code>tool_choice: {\"type\": \"tool\", \"name\": \"X\"}</code> forces the model to call exactly tool X on that API call — regardless of what it might otherwise infer. This is an API-level constraint, not a prompt instruction. Once <code>extract_metadata</code> has returned, subsequent calls use <code>tool_choice: auto</code> normally. This converts a probabilistic behavior (prompt says 'call X first', followed 88% of the time) into a deterministic one (API forces X first, 100%).",
+    "background": "The Messages API <code>tool_choice</code> parameter has three modes: <code>auto</code> (model decides), <code>any</code> (model must call some tool), and <code>{\"type\": \"tool\", \"name\": \"X\"}</code> (model must call exactly X). The last form is the correct mechanism for enforcing tool execution order — it operates at the API layer, not the prompt layer. Set it on the first API call to force the required first tool; on subsequent calls, return to <code>auto</code>. This is the only way to guarantee sequential ordering without application-level preconditions.",
+    "refs": [
+      {
+        "label": "Tool use — tool_choice",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      },
+      {
+        "label": "Agentic patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "domain": "Multi-Agent Orchestration",
+    "text": "A team is building a system to evaluate two different agent architectures for the same task — one using hub-and-spoke, one using a flat parallel topology. Both branches start from a common 'task analysis' step. What is the correct approach to avoid context contamination between the two branches?",
+    "options": [
+      "Run both approaches in separate browser tabs using different API keys",
+      "Run both approaches in sequence, resetting state between them",
+      "Use a single session and include clear section headers to separate the two branches",
+      "Fork the session after the shared 'task analysis' step, creating two independent branches from the same foundational context"
+    ],
+    "answer": 3,
+    "pattern": "Branching Reality — fork_session",
+    "explanation": "When exploring two different implementation approaches, context contamination is the risk — reasoning about approach A can bias the evaluation of approach B. The fork pattern creates two independent session branches from the shared context (the task analysis). Each branch runs its approach without seeing the other's intermediate reasoning. Results from both branches can then be compared without the anchoring effect of seeing one solution before evaluating the other.",
+    "background": "The branching reality problem: if you explore approach A first in a session, then approach B, the session already contains reasoning about A that biases B's evaluation. <code>fork_session</code> (or equivalent in the SDK) creates two independent context branches from a checkpoint — both branches start from identical context but evolve independently. This is the multi-agent equivalent of git branching: shared history up to a point, fully independent after. Critical for A/B architecture evaluation, comparative debugging, and hypothesis testing.",
+    "refs": [
+      {
+        "label": "Claude Code workflows",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      },
+      {
+        "label": "Agentic session patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "domain": "Execution & Reliability",
+    "text": "A synthesis agent aggregates outputs from three research subagents. Each subagent's output section is tagged: <code>[COVERAGE: FULL]</code>, <code>[COVERAGE: PARTIAL — missing post-2022 data]</code>, and <code>[COVERAGE: MISSING]</code>. The synthesis agent's instructions say 'synthesize all sections.' The final report presents all three sections equally without flagging the gaps. What instruction is missing?",
+    "options": [
+      "The subagents should not add coverage annotations — they confuse the synthesis agent",
+      "The synthesis agent needs explicit instruction to propagate coverage annotations: preserve PARTIAL and MISSING flags in the output, and highlight gaps to the end consumer",
+      "The synthesis agent should refuse to synthesize sections with PARTIAL or MISSING coverage",
+      "Coverage annotations should only be added post-synthesis by a quality check agent"
+    ],
+    "answer": 1,
+    "pattern": "Coverage Annotation Propagation",
+    "explanation": "Coverage annotations are only useful if they survive synthesis. The synthesis agent was told to 'synthesize all sections' — which it did, correctly, but without any instruction about what to do with coverage metadata. The fix: explicit instruction to preserve coverage annotations in the final output and surface gaps clearly. FULL sections integrate normally; PARTIAL sections note what's missing; MISSING sections are flagged as gaps requiring additional research. Without this, coverage metadata is silently discarded.",
+    "background": "Coverage annotations (FULL / PARTIAL / MISSING per section) are the mechanism by which multi-agent pipelines communicate confidence and completeness to downstream consumers. They're only valuable if they're preserved through the synthesis layer. The synthesis agent needs explicit instructions: treat FULL sections as authoritative; include PARTIAL sections but note the gap; flag MISSING sections as explicit gaps for the end consumer. This allows the final consumer (human or downstream agent) to make informed decisions about where additional research is needed.",
+    "refs": [
+      {
+        "label": "Multi-agent synthesis patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "domain": "Memory & Context Architecture",
+    "text": "A long-running codebase refactoring session (45 minutes, 60+ tool calls) has the agent maintaining an <code>investigation-notes.md</code> file with key findings. The engineer resumes the session the next morning. The codebase has changed overnight — 3 files were modified by another developer. The engineer resumes the session directly. What is the correct resumption approach?",
+    "options": [
+      "Start a completely fresh session — the changed files invalidate prior findings",
+      "Resume from the full prior transcript so the agent has complete context",
+      "Resume from the prior transcript; the agent will automatically detect file changes via its tools",
+      "Resume from the prior transcript but explicitly inform the agent of the 3 changed files and their changes before it continues"
+    ],
+    "answer": 3,
+    "pattern": "Resumption in Dynamic Environments",
+    "explanation": "The prior session's findings about the codebase were based on state that has since changed. A blind resume treats stale observations as current facts. A complete restart wastes the 45 minutes of valid analysis in the scratchpad. The correct approach: resume from the prior transcript (preserving the valid analysis) but immediately inject the delta — which 3 files changed and what changed in them. The agent then updates its understanding of the affected areas without re-reading everything else.",
+    "background": "Session resumption in dynamic environments requires a delta injection pattern: resume the session context (preserving all prior analysis), then inform the agent of what has changed since the session was paused. The scratchpad file contains findings that are still valid for unchanged files — discarding them is wasteful. But the agent must not assume cached observations about changed files are current. The command form: <em>resume_session --update-context={files:[list], changes:'description'}</em> — or equivalent: prepend the delta as the first human message on resumption.",
+    "refs": [
+      {
+        "label": "Claude Code session patterns",
+        "url": "https://docs.anthropic.com/en/docs/claude-code"
+      },
+      {
+        "label": "Agentic session management",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "domain": "Multi-Agent Orchestration",
+    "text": "A coordinator distributes research across 5 subagents by domain: Finance, Tech, Legal, Healthcare, Energy. After synthesis, the report has 3 Finance sections, 2 Tech sections, and nothing on Legal, Healthcare, or Energy. All subagents ran without errors. What design flaw caused this?",
+    "options": [
+      "The Legal, Healthcare, and Energy subagents timed out but the coordinator failed to detect the errors",
+      "The coordinator assigned all subagents the same query without domain-specific scope — multiple agents searched overlapping Finance and Tech topics, producing duplicate coverage while other domains were never assigned",
+      "The synthesis agent de-duplicated content and removed Legal, Healthcare, and Energy as redundant",
+      "The coordinator should have used sequential rather than parallel execution to prevent scope overlap"
+    ],
+    "answer": 1,
+    "pattern": "Research Space Partitioning",
+    "explanation": "Parallel subagents need explicitly partitioned research spaces. If the coordinator passes the same query to all 5 agents without assigning distinct domains, each agent searches based on its own interpretation — which tends toward the most prominent topics (Finance and Tech in this case). The coordinator must explicitly assign each subagent its domain before delegating: Agent 1: Finance only; Agent 2: Tech only; etc. Without explicit partitioning, parallel agents converge on the same popular subtopics and miss niche but required domains.",
+    "background": "Research space partitioning is the coordinator's responsibility. Without explicit domain boundaries in each subagent's instructions, parallel research agents will independently discover the same prominent topics — creating duplication in popular areas while niche but required domains go uncovered. The coordinator must enumerate the full research space before delegation and assign exclusive, non-overlapping partitions to each subagent. This is the direct cause of the coverage gap problem in Q2 of the main exam, applied here to parallel rather than sequential agents.",
+    "refs": [
+      {
+        "label": "Coordinator design patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "domain": "Memory & Context Architecture",
+    "text": "A multi-agent synthesis pipeline has subagent outputs in three different formats — structured JSON tables, markdown prose, and numbered lists. The synthesis agent receives all three and produces inconsistent reports where source attributions are frequently absent. The team considers having subagents produce both their native format and a plain-text summary. What is the better solution?",
+    "options": [
+      "Insert a format normalization layer that converts all subagent outputs to a standard intermediate format before they reach the synthesis agent: <code>{claim, evidence, source, confidence}</code>",
+      "Have subagents produce both native format and plain-text summary; let the synthesis agent choose which to use",
+      "Use only JSON-outputting subagents to eliminate format heterogeneity at the source",
+      "Have the synthesis agent run three times, once per format, and merge the outputs"
+    ],
+    "answer": 0,
+    "pattern": "Structured Intermediate Representations",
+    "explanation": "A normalization layer converts heterogeneous formats to a standard schema before synthesis. This solves both problems: (1) the synthesis agent has a consistent interface regardless of which subagent produced the content; (2) attributions are preserved structurally as a required <code>source</code> field — they can't accidentally be dropped. Dual-format output gives the synthesis agent optional context but doesn't solve attribution loss. Restricting to JSON-only subagents limits the types of analysis that can be performed.",
+    "background": "Heterogeneous subagent outputs force the synthesis agent to simultaneously parse multiple representations while tracking attribution chains across different structural conventions — a task that reliably degrades quality and loses source references. The format normalization layer transforms every output into a uniform schema: each claim has an explicit source, evidence, and confidence score. Attribution becomes structural (a required field) rather than implicit (buried in prose or table footnotes). This is the solution to both inconsistent synthesis quality and lost citations.",
+    "refs": [
+      {
+        "label": "Multi-agent structured output",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      },
+      {
+        "label": "Prompt engineering",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "domain": "Execution & Reliability",
+    "text": "A multi-agent pipeline processes 500 legal documents daily. The synthesis step consumes an 80,000-token context (all prior subagent outputs) on every run. This step costs significantly more than all other steps combined. What is the most cost-effective optimization that preserves output quality?",
+    "options": [
+      "Enable prompt caching on the 80,000-token synthesis context — the context is static across most documents, so cache hits reduce input token costs by up to 90%",
+      "Switch the synthesis step to the Batch API to get 50% cost savings",
+      "Reduce the synthesis context to 10,000 tokens by summarizing subagent outputs before synthesis",
+      "Run the synthesis step every 5 documents rather than per-document"
+    ],
+    "answer": 0,
+    "pattern": "Prompt Caching for Repeated Synthesis Contexts",
+    "explanation": "When a large context is repeated across many requests (instructions, schema definitions, reference material), prompt caching stores the KV cache after the first request and reuses it for subsequent ones — reducing cached token costs by up to 90%. An 80,000-token synthesis context that's structurally identical across 500 documents is the canonical prompt caching use case. The Batch API applies only to single-step inference, not multi-step synthesis. Summarizing context risks losing precision. Per-5-document synthesis misses per-document nuances.",
+    "background": "Prompt caching stores the key-value computation for repeated context prefixes. When the synthesis step has a large, stable context (system prompt + instructions + schema = 80K tokens), this prefix can be cached after the first request. All subsequent requests that share the same prefix hit the cache and pay only for uncached tokens. At 500 documents/day with an 80K-token prefix, prompt caching can reduce synthesis costs by 80–90%. The prefix must be identical across requests — any change invalidates the cache.",
+    "refs": [
+      {
+        "label": "Prompt caching",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching"
+      },
+      {
+        "label": "Cost optimization patterns",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "domain": "Multi-Agent Orchestration",
+    "text": "A coordinator agent receives a complex research task. Instead of specifying 'search for X then analyze Y then synthesize Z,' the coordinator's instructions say: 'Produce a comprehensive analysis of climate policy impacts on emerging markets, covering economic, political, and environmental dimensions. Prioritize sources from the last 3 years. Output: executive summary + detailed findings with citations.' Three subagents return excellent results covering all dimensions. Which principle explains why this approach works?",
+    "options": [
+      "The coordinator implicitly specified tool use by mentioning 'sources' and 'citations'",
+      "The subagents are pre-trained on climate policy and don't need specific direction",
+      "The coordinator used broad queries that happened to cover all dimensions by chance",
+      "Goal-oriented delegation: specifying the target outcome and quality criteria allows subagents to self-direct their strategy adaptively, covering gaps the coordinator didn't anticipate"
+    ],
+    "answer": 3,
+    "pattern": "Goal-Oriented Delegation",
+    "explanation": "The coordinator specified the goal (comprehensive analysis), the scope (economic, political, environmental), quality criteria (last 3 years, citation-backed), and output format (executive summary + detailed findings). This is goal-oriented delegation — the subagents determined their own search strategies, source selection, and depth allocation to meet these criteria. Procedural instructions would have specified steps that might miss unforeseen angles. Goal-oriented instructions transfer responsibility for strategy to the subagent, which can adapt to what it actually finds.",
+    "background": "Goal-oriented delegation inverts the coordinator-subagent relationship: instead of prescribing <em>how</em> to accomplish a task, it specifies <em>what</em> the output should look like and <em>what makes it good</em>. The subagent applies its own judgment about research strategy, source prioritization, and depth allocation. This produces more comprehensive and adaptive results than procedural instructions because the subagent responds to what it actually finds rather than following a fixed script. Quality criteria (recency, breadth, citation requirements) give the subagent objective evaluation benchmarks.",
+    "refs": [
+      {
+        "label": "Agentic delegation patterns",
+        "url": "https://docs.anthropic.com/en/docs/agents-and-tools"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "domain": "Multi-Agent Orchestration",
+    "text": "In MCP's client-host-server architecture, which component is responsible for enforcing security policies, managing user authorization decisions, and controlling cross-server interactions?",
+    "pattern": "Host-Level Security Orchestration",
+    "explanation": "The MCP spec explicitly states the Host process controls client connection permissions, enforces security policies, handles user authorization decisions, and coordinates AI/LLM integration. Servers operate independently but must respect constraints — they don't self-enforce cross-server security. Clients maintain isolated 1:1 sessions but don't own authorization policy. There is no separate security gateway in the MCP architecture.",
+    "background": "MCP follows a client-host-server architecture where the Host is the central coordinator. It creates and manages multiple Client instances, each with a 1:1 relationship to a Server. The Host enforces all security boundaries and ensures servers cannot see into each other or read the full conversation.",
+    "refs": [
+      {
+        "label": "MCP Architecture",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "Each MCP Server, which self-enforces its own security constraints independently",
+      "The Host process, which acts as the container and coordinator for all client instances",
+      "A dedicated MCP security gateway that sits between all clients and servers",
+      "The MCP Client, which validates authorization tokens before forwarding requests to servers"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 12,
+    "domain": "Execution & Reliability",
+    "text": "An agent connected to 30 MCP servers with a total of 500 tools experiences high latency and cost. According to Anthropic's recommended pattern, what is the most effective mitigation?",
+    "pattern": "Code-Execution-with-MCP Token Reduction",
+    "explanation": "Anthropic's engineering blog describes code-execution-with-MCP as the solution for tool scaling: agents write code that calls MCP server APIs instead of using direct tool calls, achieving up to 98.7% token reduction. Increasing context window doesn't reduce cost or latency from processing definitions. Splitting tools across parallel agents with full sets doesn't reduce per-agent overhead. Prompt caching helps with repeated prefixes but doesn't address the fundamental overhead of 500 tool definitions consuming context every turn.",
+    "background": "As MCP usage scales, loading all tool definitions upfront and passing intermediate results through the context window dramatically increases cost and latency. The code-execution-with-MCP pattern has agents write code against tool APIs in a sandbox, using progressive tool discovery to load only needed tools, reducing token usage from ~150K to ~2K tokens in benchmarked scenarios.",
+    "refs": [
+      {
+        "label": "Code execution with MCP",
+        "url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      }
+    ],
+    "options": [
+      "Split the 500 tools evenly across multiple parallel agents, each receiving the full tool set",
+      "Cache all tool definitions in a prompt cache block and reuse them across every turn",
+      "Use code execution so the agent writes code against MCP server APIs, loading tools on-demand rather than injecting all definitions into context",
+      "Increase the context window size to accommodate all 500 tool definitions without truncation"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 13,
+    "domain": "Multi-Agent Orchestration",
+    "text": "In MCP, each Client maintains a 1:1 relationship with a Server. What is the primary architectural reason for this isolation?",
+    "pattern": "MCP Server Isolation Principle",
+    "explanation": "The MCP spec explicitly states that servers should not be able to read the whole conversation or see into other servers. The 1:1 client-server relationship ensures each server receives only necessary contextual information. Sharing state across servers contradicts the isolation principle. Full conversation access is explicitly prohibited — the host retains it. The 1:1 relationship is about security isolation, not load balancing.",
+    "background": "MCP's design principles emphasize that servers are intentionally isolated from each other. The Host process controls all cross-server interactions, and each server connection maintains strict boundaries. This prevents data leakage between integrations and limits the blast radius of a compromised server.",
+    "refs": [
+      {
+        "label": "MCP Architecture — Design Principles",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "To enable servers to access the full conversation history for better contextual responses",
+      "To simplify load balancing by ensuring each server handles exactly one concurrent request",
+      "To prevent servers from seeing into each other and ensure each receives only the contextual information it needs",
+      "To allow multiple servers to share state through a common client-side session store"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 14,
+    "domain": "Memory & Context Architecture",
+    "text": "An agent using direct MCP tool calls processes a 50-row database result, filters it to 3 relevant rows, then passes those to a second tool. What is the primary context window inefficiency in this pattern?",
+    "pattern": "Intermediate Result Context Bloat",
+    "explanation": "Anthropic's engineering blog specifically identifies intermediate tool results consuming additional tokens as a key scaling problem. When agents use direct tool calls, all results pass through the context window — even when most data is discarded. Tool definitions are loaded once (not per-call). MCP uses stateful sessions so re-authentication per call is not a concern. Tool chaining works natively in the agent loop without a separate persistence layer.",
+    "background": "In direct tool-calling patterns, every intermediate result flows through the context window as part of the conversation. This is wasteful when agents only need a small subset of results for the next step. The code-execution pattern solves this by letting agents filter data within the execution environment before results enter context.",
+    "refs": [
+      {
+        "label": "Code execution with MCP — Intermediate results",
+        "url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      }
+    ],
+    "options": [
+      "The full 50-row intermediate result is injected into the context window even though only 3 rows are needed downstream",
+      "The tool definitions for both tools are loaded twice, once per invocation",
+      "The second tool call cannot reference the first tool's output without a session persistence layer",
+      "The agent must re-authenticate with the MCP server for each tool call, adding auth tokens to context"
+    ],
+    "answer": 0
+  },
+  {
+    "id": 15,
+    "domain": "Execution & Reliability",
+    "text": "When implementing the code-execution-with-MCP pattern, how should tools be organized for progressive discovery by the agent?",
+    "pattern": "Progressive Tool Discovery",
+    "explanation": "The code-execution-with-MCP pattern organizes tools as filesystem-based code files and supports search_tools with multiple detail levels (name-only, name+description, full schema), enabling agents to load only what they need. A monolithic JSON file defeats the purpose of progressive discovery. Environment variables cannot represent complex tool schemas. While vector search is a valid retrieval technique, the documented pattern specifically uses filesystem organization with tiered detail levels.",
+    "background": "Progressive tool discovery is a key component of efficient MCP agent design. Instead of loading all tool definitions upfront, agents discover tools incrementally — first browsing names, then reading descriptions of relevant ones, and finally loading full schemas only for tools they intend to use. This dramatically reduces token consumption.",
+    "refs": [
+      {
+        "label": "Code execution with MCP",
+        "url": "https://www.anthropic.com/engineering/code-execution-with-mcp"
+      }
+    ],
+    "options": [
+      "As a vector database of tool embeddings that the agent queries with natural language",
+      "As a single monolithic JSON file containing all tool schemas, loaded entirely at agent startup",
+      "As filesystem-based code files with a <code>search_tools</code> function supporting multiple detail levels: name-only, name+description, and full schema",
+      "As environment variables injected into the execution sandbox at initialization time"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 16,
+    "domain": "Execution & Reliability",
+    "text": "A Claude agent's API response returns <code>stop_reason: \"tool_use\"</code>. What should the agent loop do next?",
+    "pattern": "Agent Loop Tool-Use Stop Handling",
+    "explanation": "When stop_reason is 'tool_use', the model is requesting that the client execute a tool and return the result. The agent loop must execute the tool, then continue the conversation with the result. Returning tool params to the user would break the loop. Re-sending with the tool name appended is nonsensical. Terminating the loop would abandon an incomplete task — tool_use explicitly means the model needs more information to continue.",
+    "background": "The agent loop is the core execution cycle of Claude-based agents. When the model returns stop_reason 'tool_use', it has generated a tool_use content block specifying which tool to call and with what parameters. The client must execute the tool and return results before the model can produce its final answer or request additional tools.",
+    "refs": [
+      {
+        "label": "Handling stop reasons",
+        "url": "https://docs.anthropic.com/en/api/handling-stop-reasons"
+      },
+      {
+        "label": "Tool use with Claude",
+        "url": "https://docs.anthropic.com/en/docs/build-with-claude/tool-use"
+      }
+    ],
+    "options": [
+      "Re-send the same prompt with the tool name appended to force the model to skip the tool call",
+      "Terminate the agent loop since tool_use indicates the model has completed its task",
+      "Execute the requested tool, then send a new message with the tool result in a <code>tool_result</code> content block so the model can continue",
+      "Immediately return the tool call parameters to the end user as the final response"
+    ],
+    "answer": 2
+  },
+  {
+    "id": 17,
+    "domain": "Multi-Agent Orchestration",
+    "text": "In MCP, capability negotiation occurs during session initialization. Which statement correctly describes this process?",
+    "pattern": "MCP Capability Negotiation Protocol",
+    "explanation": "The MCP spec states that capability negotiation is bilateral — servers declare what they support (resources, tools, prompts) and clients declare theirs (sampling, roots, elicitation). Both must respect these throughout the session. It's not server-only; clients also declare features. Capabilities are negotiated once at initialization, not per-request. The host manages clients but doesn't broadcast a universal capability set to servers.",
+    "background": "MCP capability negotiation is a handshake that occurs when a client connects to a server. The server declares which primitives it supports (e.g., tools, resources, prompts, resource subscriptions) and the client declares its features (e.g., sampling, roots, elicitation). This allows both sides to adapt their behavior to the other's capabilities.",
+    "refs": [
+      {
+        "label": "MCP Specification Overview",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25"
+      },
+      {
+        "label": "MCP Architecture",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture"
+      }
+    ],
+    "options": [
+      "Capabilities are dynamically renegotiated on every request based on the current tool being called",
+      "Both the server and client declare their supported features at initialization, and both must respect the declared capabilities throughout the session",
+      "The host broadcasts a universal capability set to all servers, overriding individual server declarations",
+      "Only the server declares capabilities; the client automatically adapts to whatever the server supports"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 18,
+    "domain": "Memory & Context Architecture",
+    "text": "An MCP server needs to request additional information from the user during a tool execution — for example, asking for a confirmation code. Which MCP client feature enables this?",
+    "pattern": "MCP Elicitation for User Input",
+    "explanation": "Elicitation is the MCP client feature specifically designed for servers to request additional information from users during execution, described as 'secure out-of-band interactions' in the November 2025 spec. Sampling lets servers request LLM completions — not user input. Roots let servers discover filesystem/URI boundaries, not credentials. Prompts are server-exposed templates for users to invoke, not a mechanism for servers to request information mid-execution.",
+    "background": "The November 2025 MCP spec introduced Elicitation as a client feature. It enables servers to request additional information from users in a secure, structured way during tool execution. This is distinct from Sampling (which involves LLM interactions) and is essential for workflows requiring user confirmation, additional credentials, or disambiguation.",
+    "refs": [
+      {
+        "label": "MCP November 2025 Spec — Elicitation",
+        "url": "https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/"
+      },
+      {
+        "label": "MCP Specification",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25"
+      }
+    ],
+    "options": [
+      "Roots — a client feature that lets servers query filesystem boundaries to find stored credentials",
+      "Elicitation — a client feature that allows servers to make secure out-of-band requests for additional information from users",
+      "Prompts — a server feature that provides templated messages the user can select from",
+      "Sampling — a client feature that lets servers invoke the LLM to generate the missing information"
+    ],
+    "answer": 1
+  },
+  {
+    "id": 19,
+    "domain": "Execution & Reliability",
+    "text": "The November 2025 MCP specification introduced <em>Tasks</em>. What problem do Tasks solve in agent architectures?",
+    "pattern": "MCP Tasks for Async Operations",
+    "explanation": "The November 2025 spec introduced Tasks specifically for async operation tracking with status queries — essential for long-running operations like data processing or file generation. Tasks don't replace tool calls; they complement them for async workflows. Tasks don't enable cross-server shared memory, which violates MCP's isolation principles. Tasks are not a batching mechanism — they track individual operation lifecycles.",
+    "background": "MCP Tasks were introduced in the November 2025 specification to support task-based workflows. They allow servers to accept a request, return a task identifier, and let clients poll or subscribe for status updates. This is critical for production agents that interact with slow backend systems where synchronous tool calls would time out.",
+    "refs": [
+      {
+        "label": "MCP November 2025 Spec Release",
+        "url": "https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/"
+      }
+    ],
+    "options": [
+      "They provide a queuing mechanism that batches multiple tool calls into a single network round-trip",
+      "They enable servers to directly write results into a shared memory store accessible by other servers",
+      "They replace tool calls entirely, providing a higher-level abstraction for all server interactions",
+      "They enable asynchronous operation tracking, allowing clients to query the status of long-running server operations"
+    ],
+    "answer": 3
+  },
+  {
+    "id": 20,
+    "domain": "Multi-Agent Orchestration",
+    "text": "An architect is designing an MCP deployment where servers run on remote infrastructure behind a load balancer. Which MCP transport should they use?",
+    "pattern": "MCP Remote Transport Selection",
+    "explanation": "MCP specifies two transports: stdio for local processes and Streamable HTTP for remote services. Streamable HTTP is the correct choice for remote infrastructure. stdio is only for local processes — it does not support remote connections. MCP uses JSON-RPC 2.0 over its own transports, not raw WebSocket with custom framing. gRPC is not an MCP transport; MCP uses JSON-RPC 2.0.",
+    "background": "MCP supports two transport mechanisms: stdio for local process communication and Streamable HTTP for remote services. For production deployments with load balancers and horizontal scaling, Streamable HTTP is the appropriate transport. The 2026 roadmap acknowledges ongoing work to address Streamable HTTP scaling gaps with load balancers.",
+    "refs": [
+      {
+        "label": "MCP Specification — Transports",
+        "url": "https://modelcontextprotocol.io/specification/2025-11-25"
+      }
+    ],
+    "options": [
+      "stdio, which supports both local and remote server processes natively",
+      "gRPC, which MCP adopted as its default remote transport in the 2025 specification",
+      "WebSocket with custom JSON-RPC framing, which is the only transport supporting stateful sessions",
+      "Streamable HTTP, which is the transport designed for remote MCP services"
+    ],
+    "answer": 3
+  }
+]

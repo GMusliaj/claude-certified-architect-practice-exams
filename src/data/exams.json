@@ -1,0 +1,102 @@
+[
+  {
+    "id": "full",
+    "title": "Claude Certified Architect — Full Practice Exam",
+    "description": "All 5 domains, 60 questions. The closest match to the real certification exam.",
+    "badge": "Full · 60 Questions",
+    "questionFile": "full",
+    "timeLimitMin": 120,
+    "officialTimeLimitMin": 90,
+    "warnSecs": 300,
+    "passMark": 72,
+    "accent": "#f59e0b",
+    "accentDim": "rgba(245,158,11,.11)",
+    "domains": [
+      { "name": "Agentic Architecture & Orchestration",  "weight": 27 },
+      { "name": "Tool Design & MCP Integration",         "weight": 18 },
+      { "name": "Claude Code Configuration & Workflows", "weight": 20 },
+      { "name": "Prompt Engineering & Structured Output","weight": 20 },
+      { "name": "Context Management & Reliability",      "weight": 15 }
+    ],
+    "selection": {
+      "Agentic Architecture & Orchestration":   16,
+      "Tool Design & MCP Integration":          11,
+      "Claude Code Configuration & Workflows":  12,
+      "Prompt Engineering & Structured Output": 12,
+      "Context Management & Reliability":        9
+    }
+  },
+  {
+    "id": "foundations",
+    "title": "Claude Certified Architect — Foundations",
+    "description": "30-question exam covering all 5 official domains at official exam-weight distribution.",
+    "badge": "Foundations · 30 Questions",
+    "questionFile": "foundations",
+    "timeLimitMin": 90,
+    "officialTimeLimitMin": 45,
+    "warnSecs": 300,
+    "passMark": 72,
+    "accent": "#d97706",
+    "accentDim": "rgba(217,119,6,.11)",
+    "domains": [
+      { "name": "Agentic Architecture & Orchestration",  "weight": 27 },
+      { "name": "Tool Design & MCP Integration",         "weight": 18 },
+      { "name": "Claude Code Configuration & Workflows", "weight": 20 },
+      { "name": "Prompt Engineering & Structured Output","weight": 20 },
+      { "name": "Context Management & Reliability",      "weight": 15 }
+    ],
+    "selection": {
+      "Agentic Architecture & Orchestration":   8,
+      "Tool Design & MCP Integration":          5,
+      "Claude Code Configuration & Workflows":  6,
+      "Prompt Engineering & Structured Output": 6,
+      "Context Management & Reliability":       5
+    }
+  },
+  {
+    "id": "agents",
+    "title": "Advanced Multi-Agent Systems",
+    "description": "Specialist drill on orchestration, memory architecture, and execution reliability.",
+    "badge": "Advanced · 10 Questions",
+    "questionFile": "agents",
+    "timeLimitMin": 40,
+    "officialTimeLimitMin": 20,
+    "warnSecs": 120,
+    "passMark": 72,
+    "accent": "#a78bfa",
+    "accentDim": "rgba(167,139,250,.11)",
+    "domains": [
+      { "name": "Multi-Agent Orchestration",       "weight": 40 },
+      { "name": "Memory & Context Architecture",   "weight": 30 },
+      { "name": "Execution & Reliability",         "weight": 30 }
+    ],
+    "selection": {
+      "Multi-Agent Orchestration":     4,
+      "Memory & Context Architecture": 3,
+      "Execution & Reliability":       3
+    }
+  },
+  {
+    "id": "extraction",
+    "title": "Data Extraction & Reliability",
+    "description": "Schema design, compliance, and error-handling patterns for production extraction pipelines.",
+    "badge": "Advanced · 10 Questions",
+    "questionFile": "extraction",
+    "timeLimitMin": 40,
+    "officialTimeLimitMin": 20,
+    "warnSecs": 120,
+    "passMark": 72,
+    "accent": "#34d399",
+    "accentDim": "rgba(52,211,153,.11)",
+    "domains": [
+      { "name": "Schema Design & Extraction",        "weight": 40 },
+      { "name": "Compliance & Human-in-the-Loop",    "weight": 30 },
+      { "name": "Error Handling & Validation",       "weight": 30 }
+    ],
+    "selection": {
+      "Schema Design & Extraction":     4,
+      "Compliance & Human-in-the-Loop": 3,
+      "Error Handling & Validation":    3
+    }
+  }
+]
