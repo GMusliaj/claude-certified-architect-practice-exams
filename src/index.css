@@ -102,7 +102,7 @@ button { cursor: pointer; font-family: inherit; }
   color: var(--text);
   transition: background .15s, border-color .15s, opacity .15s;
 }
-.btn:hover { background: #2a2a2a; border-color: #3a3a3a; }
+.btn:hover { border-color: var(--accent); }
 .btn:disabled { opacity: .35; cursor: not-allowed; }
 .btn-primary {
   background: var(--accent);
@@ -110,13 +110,13 @@ button { cursor: pointer; font-family: inherit; }
   color: #000;
   font-weight: 600;
 }
-.btn-primary:hover { filter: brightness(1.1); }
+.btn-primary:hover { background: var(--accent); border-color: var(--accent); filter: brightness(1.1); }
 .btn-ghost {
   background: transparent;
   border-color: var(--border);
   color: var(--muted);
 }
-.btn-ghost:hover { color: var(--text); border-color: #4a4a4a; }
+.btn-ghost:hover { color: var(--text); border-color: var(--accent); }
 .btn-drill {
   background: rgba(96,165,250,.12);
   border-color: rgba(96,165,250,.35);
@@ -157,7 +157,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .header-nav a:hover {
   color: var(--text);
-  border-color: #4a4a4a;
+  border-color: var(--accent);
   text-decoration: none;
 }
 .logo {
@@ -753,7 +753,7 @@ button { cursor: pointer; font-family: inherit; }
   transition: border-color .15s, background .15s;
 }
 .mode-opt input[type="radio"] { display: none; }
-.mode-opt:hover { border-color: #4a4a4a; background: var(--surface2); }
+.mode-opt:hover { border-color: var(--accent); background: var(--surface2); }
 .mode-opt.active {
   border-color: var(--accent);
   background: var(--accent-dim);
@@ -961,7 +961,7 @@ button { cursor: pointer; font-family: inherit; }
   color: var(--muted);
   transition: all .15s;
 }
-.filter-tab:hover { border-color: #4a4a4a; color: var(--text); }
+.filter-tab:hover { border-color: var(--accent); color: var(--text); }
 .filter-tab.active {
   background: var(--accent-dim);
   border-color: var(--accent);
@@ -1122,7 +1122,7 @@ button { cursor: pointer; font-family: inherit; }
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 /* ── Pause ─────────────────────────────────────────────────────────────────── */
 .btn-pause-row { color: var(--muted); }
-.btn-pause-row:hover { color: var(--text); border-color: #4a4a4a; }
+.btn-pause-row:hover { color: var(--text); border-color: var(--accent); }
 
 .pause-overlay {
   display: flex;
