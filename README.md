@@ -19,19 +19,20 @@ Start with **Full** for the closest match to the real exam, then use the focused
 
 ## Features
 
-- **Exam Mode** — timed, pass/fail verdict (72% threshold), domain breakdown, saved to history
-- **Study Mode** — no timer, amber "Study" badge, no pass/fail verdict, not saved to history
-- **Weak-area drill** — after any exam, a "Drill Weak Areas" button appears when any domain scored < 75%; launches a targeted 10-question mini-exam drawn exclusively from those domains
+- **Exam Mode** — timed, no per-question feedback; selecting an option records it immediately with neutral highlight; pass/fail verdict and explanations revealed only on the results screen; saved to history
+- **Study Mode** — no timer, amber "Study" badge; selecting an option stages it (pending), a "Check Answer" button confirms and reveals the explanation and Background panel inline; not saved to history
+- **Abandon exam** — cancel an in-progress exam at any time via the Abandon button on the resume bar or pause overlay; clears progress and returns to the start screen
+- **Weak-area drill** — after any exam (or from the Review page), a "Drill Weak Areas" button appears when any domain scored < 75%; launches a targeted 10-question mini-exam drawn from those domains
+- **Attempt review** (`/review/:id`) — click any past attempt in History to review every question: options highlighted correct/wrong, full explanation, Background panel, and refs; Drill Weak Areas available from here too
 - **Best score badges** — each exam card on the home page shows your best score and attempt count
 - **Continue section** — the home page surfaces any in-progress exam at the top with a progress bar and elapsed time; click to resume instantly
 - **Pause exam** — pause button in the question footer stops the timer and hides the question; resume when ready
-- **Select-then-confirm** — clicking an option highlights it (pending state) but does not lock it in; a "Check Answer" button commits the selection, preventing accidental mis-clicks
-- **Question snapshot** — the question order and draw are frozen at exam start; resuming always restores the exact same set and sequence
-- **Light / Dark / System theme** — theme toggle in the top-right nav on every page; System mode follows OS preference; choice is persisted in `localStorage` with no flash-of-wrong-theme on load
-- **History** (`/history`) — full attempt log with filter tabs, aggregate stats, domain bar charts
+- **Question snapshot** — questions are frozen at exam start so bank edits never affect a running session; resuming always restores the exact same set and sequence
+- **Light / Dark / System theme** — theme toggle in the top-right nav on every page; System mode follows OS preference; persisted in `localStorage` with no flash-of-wrong-theme on load
+- **History** (`/history`) — full attempt log with filter tabs, aggregate stats, domain bar charts per attempt
 - **Analytics** (`/analytics`) — domain performance across all attempts, hardest/easiest questions, SVG score-trend sparklines per exam
 - **Keyboard navigation** — `1`–`4` stage a pending option, `Enter`/`Space` confirms or advances, `←`/`Backspace` goes back
-- **Auto-save progress** — resume a mid-exam session from where you left off
+- **Auto-save progress** — resume a mid-exam session from where you left off (Exam Mode only)
 - **Backlog** (`/backlog.html`) — visual project backlog board (auto-generated from `worklog.txt`)
 
 ---
@@ -54,9 +55,9 @@ Start with **Full** for the closest match to the real exam, then use the focused
 
 *Question screen — domain pill, options, progress bar, timer*
 
-<img src="screenshots/05-exam-answered.png" width="640" alt="Question screen — answer confirmed with explanation and Background panel">
+<img src="screenshots/05-exam-answered.png" width="640" alt="Study Mode — answer confirmed with explanation and Background panel">
 
-*Question screen — answer confirmed with explanation and Background panel*
+*Study Mode — answer confirmed with explanation and Background panel*
 
 <img src="screenshots/06-history.png" width="640" alt="History — attempt log with stats bar (empty state)">
 
@@ -158,15 +159,17 @@ Builds the app, starts a local server, captures all routes with Playwright/Chrom
 1. Install and start the server (see above).
 2. Open the URL — the home page lists all four exam cards with your best score history.
 3. Click an exam card.
-4. On the **Start screen**, choose **Exam Mode** (timed, saved) or **Study Mode** (untimed, not saved), then click Start.
-5. Answer questions. Click an option to stage it (highlighted in amber), then press **Check Answer** or `Enter`/`Space` to confirm. `1`–`4` stage options by keyboard; `←`/`Backspace` goes back.
-6. After confirming, the **explanation** and **Background** panel appear immediately — read them before advancing.
-   - Use **⏸ Pause** (in the button row) to stop the timer and hide the question at any time.
-7. On the **Results screen**:
-   - Exam Mode: score, pass/fail verdict, domain breakdown, time vs. official limit, Save Results (JSON)
+4. On the **Start screen**, choose **Exam Mode** (timed, saved to history) or **Study Mode** (untimed, not saved), then click Start.
+5. Answer questions:
+   - **Exam Mode**: click an option to record it immediately (neutral highlight); no feedback shown. Use `1`–`4` to select by keyboard. `←`/`Backspace` goes back.
+   - **Study Mode**: click an option to stage it (amber highlight), then press **Check Answer** or `Enter`/`Space` to confirm and reveal the explanation + Background panel. `←`/`Backspace` goes back.
+   - Use **⏸ Pause** to stop the timer and hide the question at any time. Use **Abandon** to cancel and start fresh.
+6. On the **Results screen**:
+   - Exam Mode: score, pass/fail verdict, domain breakdown, per-question explanations, time vs. official limit
    - Study Mode: score, "Learning Summary" heading, domain breakdown
-   - If any domain scored < 75%, a **"Drill Weak Areas"** button launches a 10-question follow-up targeting those domains
-8. Visit **History** or **Analytics** in the nav to review past performance.
+   - If any domain scored < 75%, a **"Drill Weak Areas"** button launches a 10-question follow-up
+7. In **History**, click any past attempt to open the **Review page** — see every question with options highlighted correct/wrong, full explanations, and a Drill Weak Areas button.
+8. Visit **Analytics** in the nav for domain trends and question difficulty stats.
 
 Progress is saved automatically in `localStorage`. Close the tab at any time and resume where you left off (Exam Mode only).
 
@@ -178,7 +181,7 @@ Progress is saved automatically in `localStorage`. Close the tab at any time and
 claude-exam-guide/
 ├── src/
 │   ├── main.jsx              # React entry point
-│   ├── App.jsx               # Router: / · /exam/:id · /history · /analytics
+│   ├── App.jsx               # Router: / · /exam/:id · /history · /analytics · /review/:id
 │   ├── index.css             # Global design system (dark theme, CSS variables)
 │   ├── data/
 │   │   └── exams.json        # Single source of truth for all exam configs
@@ -187,13 +190,14 @@ claude-exam-guide/
 │   ├── lib/
 │   │   ├── buildExam.js      # buildExam() + buildDrillExam() — domain-weighted sampling
 │   │   ├── loadQuestions.js  # Lazy-loads question bank JSON files
-│   │   ├── storage.js        # localStorage helpers: saveResult / loadHistory / saveProgress
+│   │   ├── storage.js        # localStorage helpers: saveResult / loadHistory / saveProgress / saveSnapshot
 │   │   ├── theme.js          # getTheme / setTheme / THEMES — theme persistence
-│   │   └── format.js         # Shared formatting: fmtTime, fmtStudyTime, calcDomainScores, getExamTotal
+│   │   └── format.js         # Shared formatting: fmtTime, fmtDate, OPT_LABEL, getWeakDomains, calcDomainScores
 │   └── pages/
 │       ├── Home.jsx          # Exam selector with score badges
 │       ├── Exam.jsx          # Full exam flow: start → questions → results
-│       ├── History.jsx       # Attempt log with filter tabs and stats bar
+│       ├── History.jsx       # Attempt log with filter tabs and stats bar; links to Review
+│       ├── Review.jsx        # Per-attempt question review with correct/wrong highlighting
 │       └── Analytics.jsx     # Domain performance, question difficulty, score trends
 │
 ├── public/
@@ -223,6 +227,7 @@ claude-exam-guide/
 │           ├── claude.js     # Wrapper around the local claude CLI
 │           ├── materials.js  # Read/write materials store
 │           ├── logger.js     # File + stderr logger for hook scripts
+│           ├── urlcheck.js   # Shared SPA URL validation (fetchBody, isNotFoundBody, SPA_DOMAINS)
 │           └── env.js        # .env loader
 │
 ├── archived/                 # Original standalone HTML exams (pre-React migration)
@@ -343,6 +348,15 @@ Fires after every `Write` to `questions/*.json`. Validates required fields, uniq
 ```
 [validate-questions] ✓ foundations.json: 143 questions, all valid
 [validate-questions] ✗ full.json: 1 issue — Q91: missing field "background"
+```
+
+### `check-urls`
+Fires after every `Write` to `questions/*.json`. Checks all `refs[].url` values for reachability. Handles SPA domains (`platform.claude.com`, `code.claude.com`) that return HTTP 200 for broken paths by inspecting the response body for a "Not Found" marker.
+
+```
+[check-urls] ✓ all 24 URLs OK
+[check-urls] ✗ 1 broken URL(s):
+  · https://platform.claude.com/docs/en/old-path  (SPA Not Found page)
 ```
 
 ### `render-backlog`

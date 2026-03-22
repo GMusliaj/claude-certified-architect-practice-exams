@@ -41,13 +41,14 @@ const ROUTES = [
       await page.waitForSelector('.question-text', { timeout: 15000 })
     }
   },
-  { file: '05-exam-answered.png', path: '/#/exam/foundations',  caption: 'Question screen — answer confirmed with explanation and Background panel',
+  { file: '05-exam-answered.png', path: '/#/exam/foundations',  caption: 'Study Mode — answer confirmed with explanation and Background panel',
     action: async page => {
       await page.waitForSelector('.mode-toggle', { timeout: 20000 })
+      // Switch to Study Mode so explanation is shown after answering
+      await page.locator('.mode-opt').nth(1).click()
       await page.locator('.btn-primary').click()
       await page.waitForSelector('.question-text', { timeout: 15000 })
       await page.locator('.option').first().click()
-      // Select-then-confirm flow: click stages the option, Check Answer commits it
       await page.locator('.btn-primary').click()
       await page.waitForSelector('.explanation', { timeout: 10000 })
     }
