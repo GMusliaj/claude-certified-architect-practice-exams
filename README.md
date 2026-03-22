@@ -23,9 +23,14 @@ Start with **Full** for the closest match to the real exam, then use the focused
 - **Study Mode** — no timer, amber "Study" badge, no pass/fail verdict, not saved to history
 - **Weak-area drill** — after any exam, a "Drill Weak Areas" button appears when any domain scored < 75%; launches a targeted 10-question mini-exam drawn exclusively from those domains
 - **Best score badges** — each exam card on the home page shows your best score and attempt count
+- **Continue section** — the home page surfaces any in-progress exam at the top with a progress bar and elapsed time; click to resume instantly
+- **Pause exam** — pause button in the question footer stops the timer and hides the question; resume when ready
+- **Select-then-confirm** — clicking an option highlights it (pending state) but does not lock it in; a "Check Answer" button commits the selection, preventing accidental mis-clicks
+- **Question snapshot** — the question order and draw are frozen at exam start; resuming always restores the exact same set and sequence
+- **Light / Dark / System theme** — theme toggle in the top-right nav on every page; System mode follows OS preference; choice is persisted in `localStorage` with no flash-of-wrong-theme on load
 - **History** (`/history`) — full attempt log with filter tabs, aggregate stats, domain bar charts
 - **Analytics** (`/analytics`) — domain performance across all attempts, hardest/easiest questions, SVG score-trend sparklines per exam
-- **Keyboard navigation** — `1`–`4` select options, `Enter`/`Space` advances, `←`/`Backspace` goes back
+- **Keyboard navigation** — `1`–`4` stage a pending option, `Enter`/`Space` confirms or advances, `←`/`Backspace` goes back
 - **Auto-save progress** — resume a mid-exam session from where you left off
 - **Backlog** (`/backlog.html`) — visual project backlog board (auto-generated from `worklog.txt`)
 
@@ -33,9 +38,9 @@ Start with **Full** for the closest match to the real exam, then use the focused
 
 ## Screenshots
 
-<img src="screenshots/01-home.png" width="640" alt="Home — exam cards with score history badges">
+<img src="screenshots/01-home.png" width="640" alt="Home — exam cards, in-progress continue section, and theme toggle">
 
-*Home — exam cards with score history badges*
+*Home — exam cards, in-progress continue section, and theme toggle*
 
 <img src="screenshots/02-exam-start.png" width="640" alt="Start screen — Exam Mode / Study Mode toggle with domain weights">
 
@@ -49,9 +54,9 @@ Start with **Full** for the closest match to the real exam, then use the focused
 
 *Question screen — domain pill, options, progress bar, timer*
 
-<img src="screenshots/05-exam-answered.png" width="640" alt="Question screen — answer selected with explanation and Background panel">
+<img src="screenshots/05-exam-answered.png" width="640" alt="Question screen — answer confirmed with explanation and Background panel">
 
-*Question screen — answer selected with explanation and Background panel*
+*Question screen — answer confirmed with explanation and Background panel*
 
 <img src="screenshots/06-history.png" width="640" alt="History — attempt log with stats bar (empty state)">
 
@@ -60,6 +65,7 @@ Start with **Full** for the closest match to the real exam, then use the focused
 <img src="screenshots/07-analytics.png" width="640" alt="Analytics — domain performance, score trends (empty state)">
 
 *Analytics — domain performance, score trends (empty state)*
+
 
 ---
 
@@ -153,8 +159,9 @@ Builds the app, starts a local server, captures all routes with Playwright/Chrom
 2. Open the URL — the home page lists all four exam cards with your best score history.
 3. Click an exam card.
 4. On the **Start screen**, choose **Exam Mode** (timed, saved) or **Study Mode** (untimed, not saved), then click Start.
-5. Answer questions. Keyboard shortcuts: `1–4` to select, `Enter`/`Space` to advance, `←`/`Backspace` to go back.
-6. After answering each question, the **explanation** and **Background** panel appear immediately — read them before advancing.
+5. Answer questions. Click an option to stage it (highlighted in amber), then press **Check Answer** or `Enter`/`Space` to confirm. `1`–`4` stage options by keyboard; `←`/`Backspace` goes back.
+6. After confirming, the **explanation** and **Background** panel appear immediately — read them before advancing.
+   - Use **⏸ Pause** (in the button row) to stop the timer and hide the question at any time.
 7. On the **Results screen**:
    - Exam Mode: score, pass/fail verdict, domain breakdown, time vs. official limit, Save Results (JSON)
    - Study Mode: score, "Learning Summary" heading, domain breakdown
@@ -175,11 +182,14 @@ claude-exam-guide/
 │   ├── index.css             # Global design system (dark theme, CSS variables)
 │   ├── data/
 │   │   └── exams.json        # Single source of truth for all exam configs
+│   ├── components/
+│   │   └── ThemeToggle.jsx   # Light/Dark/System theme dropdown (used in all pages)
 │   ├── lib/
 │   │   ├── buildExam.js      # buildExam() + buildDrillExam() — domain-weighted sampling
 │   │   ├── loadQuestions.js  # Lazy-loads question bank JSON files
 │   │   ├── storage.js        # localStorage helpers: saveResult / loadHistory / saveProgress
-│   │   └── format.js         # Shared formatting utilities
+│   │   ├── theme.js          # getTheme / setTheme / THEMES — theme persistence
+│   │   └── format.js         # Shared formatting: fmtTime, fmtStudyTime, calcDomainScores, getExamTotal
 │   └── pages/
 │       ├── Home.jsx          # Exam selector with score badges
 │       ├── Exam.jsx          # Full exam flow: start → questions → results

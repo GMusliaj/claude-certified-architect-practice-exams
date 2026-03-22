@@ -18,14 +18,15 @@ const { spawnSync, spawn } = require('child_process')
 const path  = require('path')
 const fs    = require('fs')
 
-const ROOT  = path.join(__dirname, '..')
-const PORT  = 3097
-const BASE  = `http://localhost:${PORT}`
-const OUT   = path.join(ROOT, 'screenshots')
+const ROOT             = path.join(__dirname, '..')
+const PORT             = 3097
+const BASE             = `http://localhost:${PORT}`
+const OUT              = path.join(ROOT, 'screenshots')
+const SCREENSHOT_THEME = 'light'
 
 // App uses HashRouter — all routes prefixed with /#/
 const ROUTES = [
-  { file: '01-home.png',          path: '/#/',                  caption: 'Home — exam cards with score history badges' },
+  { file: '01-home.png',          path: '/#/',                  caption: 'Home — exam cards, in-progress continue section, and theme toggle' },
   { file: '02-exam-start.png',    path: '/#/exam/foundations',  caption: 'Start screen — Exam Mode / Study Mode toggle with domain weights' },
   { file: '03-exam-study.png',    path: '/#/exam/foundations',  caption: 'Start screen — Study Mode selected',
     action: async page => {
@@ -40,12 +41,14 @@ const ROUTES = [
       await page.waitForSelector('.question-text', { timeout: 15000 })
     }
   },
-  { file: '05-exam-answered.png', path: '/#/exam/foundations',  caption: 'Question screen — answer selected with explanation and Background panel',
+  { file: '05-exam-answered.png', path: '/#/exam/foundations',  caption: 'Question screen — answer confirmed with explanation and Background panel',
     action: async page => {
       await page.waitForSelector('.mode-toggle', { timeout: 20000 })
       await page.locator('.btn-primary').click()
       await page.waitForSelector('.question-text', { timeout: 15000 })
       await page.locator('.option').first().click()
+      // Select-then-confirm flow: click stages the option, Check Answer commits it
+      await page.locator('.btn-primary').click()
       await page.waitForSelector('.explanation', { timeout: 10000 })
     }
   },
@@ -91,9 +94,10 @@ async function main () {
   for (const route of ROUTES) {
     const ctx  = await browser.newContext({
       viewport: { width: 1280, height: 800 },
-      colorScheme: 'dark',
+      colorScheme: SCREENSHOT_THEME,
     })
     const page = await ctx.newPage()
+    await page.addInitScript(t => { localStorage.setItem('theme', t) }, SCREENSHOT_THEME)
 
     console.log(`  → ${route.file}  (${route.path})`)
     await page.goto(`${BASE}${route.path}`)
