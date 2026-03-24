@@ -108,6 +108,16 @@ async function main() {
     if (!Array.isArray(q.refs) || q.refs.length === 0) {
       errors.push(`${label}: refs must be a non-empty array`);
     }
+
+    // Length-bias check: warn when correct answer is >60% longer than avg distractor
+    if (Array.isArray(q.options) && q.options.length === 4 && typeof q.answer === 'number') {
+      const correctLen    = (q.options[q.answer] || '').length;
+      const distractors   = q.options.filter((_, idx) => idx !== q.answer);
+      const avgDistractor = distractors.reduce((s, o) => s + (o || '').length, 0) / distractors.length;
+      if (avgDistractor > 0 && correctLen > avgDistractor * 1.6) {
+        errors.push(`${label}: length bias — correct answer is ${Math.round((correctLen / avgDistractor - 1) * 100)}% longer than avg distractor (run rebalance_options.js)`);
+      }
+    }
   });
 
   if (errors.length) {

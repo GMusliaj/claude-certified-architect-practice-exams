@@ -5,9 +5,9 @@
     "text": "A legal research pipeline runs 12 subagents sequentially, each searching a different jurisdiction's case database. The full pipeline takes 180 seconds. A peer suggests running all 12 in parallel. Jurisdiction research is fully independent — no subagent depends on another's results. What is the expected outcome and the correct implementation mechanism?",
     "options": [
       "Parallel execution reduces latency to ~15 seconds; implement by invoking all 12 subagents via the <code>Task</code> tool in a single coordinator turn before awaiting any results",
-      "Parallel execution is not safe because subagents share context and may overwrite each other's findings",
-      "Parallel execution applies only within a single subagent, not across multiple subagents",
-      "Parallel execution reduces latency but requires the Batch API to avoid rate limits"
+      "Parallel execution is unsafe because subagents share the coordinator's context window and may overwrite each other's findings — sequential execution with context isolation is required for independent tasks",
+      "Parallel execution of subagents is only supported within a single agent's tool calls, not across multiple subagents — the Agent SDK requires explicit sequential chaining via the <code>handoff</code> mechanism",
+      "Parallel execution reduces latency to ~15 seconds but requires routing all 12 subagents through the Batch API to avoid per-minute rate limits; direct parallel <code>Task</code> invocations will be throttled"
     ],
     "answer": 0,
     "pattern": "Parallelization — Independent Subagents",
@@ -25,10 +25,10 @@
     "domain": "Memory & Context Architecture",
     "text": "A multi-agent pipeline has 8 subagents that each produce research findings. The coordinator passes each subagent's full conversation log to the next subagent for context. By the 5th subagent, input token costs have grown 4× and some subagents are ignoring early findings. What architectural change addresses both problems?",
     "options": [
-      "Summarize each prior subagent's output before passing it to the next subagent",
-      "Use prompt caching to reduce the cost of repeated context",
+      "Have each subagent summarize its predecessor's output into a compressed format before passing it forward — this reduces token count linearly while preserving the sequential handoff architecture",
+      "Enable prompt caching on the repeated conversation prefix so that each subsequent subagent benefits from cached input tokens, reducing cost by up to 90% without changing the daisy-chain topology",
       "Replace the daisy-chain with a shared vector store: each subagent indexes its findings; subsequent subagents retrieve relevant context via semantic search rather than receiving full logs",
-      "Reduce the number of subagents to 4 to keep context manageable"
+      "Reduce the pipeline to 4 subagents with broader research scopes so the cumulative context stays within the model's effective attention window and earlier findings aren't ignored"
     ],
     "answer": 2,
     "pattern": "Shared Memory Architecture",
@@ -47,9 +47,9 @@
     "text": "A document processing agent must call <code>extract_metadata</code> before <code>enrich_content</code> on every run. In 12% of cases, the agent calls <code>enrich_content</code> first. Adding system prompt instructions has reduced but not eliminated this. A developer suggests using <code>tool_choice: {\"type\": \"tool\", \"name\": \"extract_metadata\"}</code> on the first API call. Why is this the correct fix?",
     "options": [
       "It forces the first API call to invoke <code>extract_metadata</code> at the API level, making the constraint deterministic rather than probabilistic — the model has no choice",
-      "It makes the model aware that extract_metadata should run first",
-      "It removes extract_metadata from the tool list temporarily to prevent confusion",
-      "It sets a default tool preference that the model follows for all subsequent calls"
+      "It adds a strong hint in the API request that makes the model prioritize extract_metadata first, but the model can still choose enrich_content if it judges that to be more appropriate for the input",
+      "It temporarily removes enrich_content from the available tool list for the first call, forcing the model to select from the remaining tools — you then re-add enrich_content on the second call",
+      "It sets a persistent default tool preference across all subsequent API calls in the session, so the model will continue to prefer extract_metadata throughout the entire conversation"
     ],
     "answer": 0,
     "pattern": "Forcing Execution Order via tool_choice",
@@ -71,9 +71,9 @@
     "domain": "Multi-Agent Orchestration",
     "text": "A team is building a system to evaluate two different agent architectures for the same task — one using hub-and-spoke, one using a flat parallel topology. Both branches start from a common 'task analysis' step. What is the correct approach to avoid context contamination between the two branches?",
     "options": [
-      "Run both approaches in separate browser tabs using different API keys",
-      "Run both approaches in sequence, resetting state between them",
-      "Use a single session and include clear section headers to separate the two branches",
+      "Run both architectures in completely separate sessions with independent task analysis steps, ensuring no shared context exists between them — duplicating the initial step guarantees full isolation",
+      "Run both architectures sequentially in the same session, clearing the conversation history between runs so the second branch starts from a fresh state without residual context from the first",
+      "Use a single continuous session for both architectures but insert clear section headers and role-switching prompts to logically separate the two branches within the same context window",
       "Fork the session after the shared 'task analysis' step, creating two independent branches from the same foundational context"
     ],
     "answer": 3,
@@ -96,10 +96,10 @@
     "domain": "Execution & Reliability",
     "text": "A synthesis agent aggregates outputs from three research subagents. Each subagent's output section is tagged: <code>[COVERAGE: FULL]</code>, <code>[COVERAGE: PARTIAL — missing post-2022 data]</code>, and <code>[COVERAGE: MISSING]</code>. The synthesis agent's instructions say 'synthesize all sections.' The final report presents all three sections equally without flagging the gaps. What instruction is missing?",
     "options": [
-      "The subagents should not add coverage annotations — they confuse the synthesis agent",
+      "The subagents should remove coverage annotations before sending output to the synthesis agent — the tags create confusion and cause the synthesis agent to treat all sections as equivalent",
       "The synthesis agent needs explicit instruction to propagate coverage annotations: preserve PARTIAL and MISSING flags in the output, and highlight gaps to the end consumer",
-      "The synthesis agent should refuse to synthesize sections with PARTIAL or MISSING coverage",
-      "Coverage annotations should only be added post-synthesis by a quality check agent"
+      "The synthesis agent should be instructed to reject and re-run any subagent section tagged PARTIAL or MISSING, blocking synthesis until all sections achieve FULL coverage status",
+      "Coverage annotations should be omitted from subagent outputs and instead added post-synthesis by a dedicated quality-check agent that evaluates completeness of the final report"
     ],
     "answer": 1,
     "pattern": "Coverage Annotation Propagation",
@@ -117,9 +117,9 @@
     "domain": "Memory & Context Architecture",
     "text": "A long-running codebase refactoring session (45 minutes, 60+ tool calls) has the agent maintaining an <code>investigation-notes.md</code> file with key findings. The engineer resumes the session the next morning. The codebase has changed overnight — 3 files were modified by another developer. The engineer resumes the session directly. What is the correct resumption approach?",
     "options": [
-      "Start a completely fresh session — the changed files invalidate prior findings",
-      "Resume from the full prior transcript so the agent has complete context",
-      "Resume from the prior transcript; the agent will automatically detect file changes via its tools",
+      "Start a completely fresh session without loading the prior transcript — the 3 changed files invalidate all prior findings, and resuming from stale context will produce incorrect refactoring decisions",
+      "Resume directly from the full prior transcript without additional context — the investigation-notes.md file contains all key findings, so the agent already has everything it needs to continue",
+      "Resume from the prior transcript and let the agent naturally detect the 3 changed files when it reads them via its file tools — it will automatically reconcile differences with its prior findings",
       "Resume from the prior transcript but explicitly inform the agent of the 3 changed files and their changes before it continues"
     ],
     "answer": 3,
@@ -142,10 +142,10 @@
     "domain": "Multi-Agent Orchestration",
     "text": "A coordinator distributes research across 5 subagents by domain: Finance, Tech, Legal, Healthcare, Energy. After synthesis, the report has 3 Finance sections, 2 Tech sections, and nothing on Legal, Healthcare, or Energy. All subagents ran without errors. What design flaw caused this?",
     "options": [
-      "The Legal, Healthcare, and Energy subagents timed out but the coordinator failed to detect the errors",
+      "The Legal, Healthcare, and Energy subagents encountered silent timeouts during execution, but the coordinator lacked error-handling logic to detect failures and reassign their tasks to other agents",
       "The coordinator assigned all subagents the same query without domain-specific scope — multiple agents searched overlapping Finance and Tech topics, producing duplicate coverage while other domains were never assigned",
-      "The synthesis agent de-duplicated content and removed Legal, Healthcare, and Energy as redundant",
-      "The coordinator should have used sequential rather than parallel execution to prevent scope overlap"
+      "The synthesis agent applied deduplication logic during report assembly and incorrectly classified Legal, Healthcare, and Energy findings as redundant with Finance and Tech content, removing them",
+      "The coordinator should have used strict sequential execution instead of parallel dispatch — sequential ordering prevents scope overlap by letting each subagent see what prior agents already covered"
     ],
     "answer": 1,
     "pattern": "Research Space Partitioning",
@@ -164,9 +164,9 @@
     "text": "A multi-agent synthesis pipeline has subagent outputs in three different formats — structured JSON tables, markdown prose, and numbered lists. The synthesis agent receives all three and produces inconsistent reports where source attributions are frequently absent. The team considers having subagents produce both their native format and a plain-text summary. What is the better solution?",
     "options": [
       "Insert a format normalization layer that converts all subagent outputs to a standard intermediate format before they reach the synthesis agent: <code>{claim, evidence, source, confidence}</code>",
-      "Have subagents produce both native format and plain-text summary; let the synthesis agent choose which to use",
-      "Use only JSON-outputting subagents to eliminate format heterogeneity at the source",
-      "Have the synthesis agent run three times, once per format, and merge the outputs"
+      "Have each subagent produce both its native format and a plain-text summary alongside it, then let the synthesis agent choose whichever version is easier to parse for each input on a case-by-case basis",
+      "Standardize all subagents to output structured JSON tables exclusively, eliminating format heterogeneity at the source so the synthesis agent only ever processes a single consistent input format",
+      "Have the synthesis agent process each format type in a separate pass — one pass for JSON tables, one for markdown prose, one for numbered lists — then merge the three partial reports into one final output"
     ],
     "answer": 0,
     "pattern": "Structured Intermediate Representations",
@@ -189,9 +189,9 @@
     "text": "A multi-agent pipeline processes 500 legal documents daily. The synthesis step consumes an 80,000-token context (all prior subagent outputs) on every run. This step costs significantly more than all other steps combined. What is the most cost-effective optimization that preserves output quality?",
     "options": [
       "Enable prompt caching on the 80,000-token synthesis context — the context is static across most documents, so cache hits reduce input token costs by up to 90%",
-      "Switch the synthesis step to the Batch API to get 50% cost savings",
-      "Reduce the synthesis context to 10,000 tokens by summarizing subagent outputs before synthesis",
-      "Run the synthesis step every 5 documents rather than per-document"
+      "Switch the synthesis step to the Batch API, which provides a 50% discount on input tokens — the 24-hour turnaround is acceptable for daily document processing and preserves the full 80,000-token context",
+      "Reduce the synthesis context to 10,000 tokens by having each subagent compress its output into a brief summary before the synthesis step, trading some detail for a proportional cost reduction",
+      "Batch documents into groups of 5 and run the synthesis step once per group rather than per-document, amortizing the 80,000-token context cost across multiple documents simultaneously"
     ],
     "answer": 0,
     "pattern": "Prompt Caching for Repeated Synthesis Contexts",
@@ -213,9 +213,9 @@
     "domain": "Multi-Agent Orchestration",
     "text": "A coordinator agent receives a complex research task. Instead of specifying 'search for X then analyze Y then synthesize Z,' the coordinator's instructions say: 'Produce a comprehensive analysis of climate policy impacts on emerging markets, covering economic, political, and environmental dimensions. Prioritize sources from the last 3 years. Output: executive summary + detailed findings with citations.' Three subagents return excellent results covering all dimensions. Which principle explains why this approach works?",
     "options": [
-      "The coordinator implicitly specified tool use by mentioning 'sources' and 'citations'",
-      "The subagents are pre-trained on climate policy and don't need specific direction",
-      "The coordinator used broad queries that happened to cover all dimensions by chance",
+      "Implicit tool specification: by mentioning 'sources' and 'citations' in the output requirements, the coordinator effectively mapped each subagent to specific search and retrieval tools without explicit tool_choice directives",
+      "Domain pre-training coverage: Claude's training data includes extensive climate policy research, so the subagents already have strong priors on this topic and can produce comprehensive output without detailed decomposition",
+      "Broad query coverage: the coordinator's mention of 'economic, political, and environmental dimensions' functioned as an implicit task decomposition that mapped one dimension per subagent by keyword matching",
       "Goal-oriented delegation: specifying the target outcome and quality criteria allows subagents to self-direct their strategy adaptively, covering gaps the coordinator didn't anticipate"
     ],
     "answer": 3,
@@ -264,10 +264,10 @@
       }
     ],
     "options": [
-      "Split the 500 tools evenly across multiple parallel agents, each receiving the full tool set",
-      "Cache all tool definitions in a prompt cache block and reuse them across every turn",
+      "Split the 500 tools evenly across multiple parallel agents so each agent receives the full tool set, then aggregate their responses in a final orchestration step",
+      "Cache all 500 tool definitions in a prompt cache block at the system prompt level and reuse them across every turn to amortize the initial injection cost",
       "Use code execution so the agent writes code against MCP server APIs, loading tools on-demand rather than injecting all definitions into context",
-      "Increase the context window size to accommodate all 500 tool definitions without truncation"
+      "Increase the model's max token output and context window size to accommodate all 500 tool definitions without truncation, accepting higher per-call cost for completeness"
     ],
     "answer": 2
   },
@@ -327,10 +327,10 @@
       }
     ],
     "options": [
-      "As a vector database of tool embeddings that the agent queries with natural language",
-      "As a single monolithic JSON file containing all tool schemas, loaded entirely at agent startup",
+      "As a vector database of tool embeddings that the agent queries with natural language, returning the top-k most relevant tool schemas for injection into context",
+      "As a single monolithic JSON file containing all tool schemas loaded entirely at agent startup, relying on the model's attention mechanism to select relevant tools per query",
       "As filesystem-based code files with a <code>search_tools</code> function supporting multiple detail levels: name-only, name+description, and full schema",
-      "As environment variables injected into the execution sandbox at initialization time"
+      "As environment variables injected into the execution sandbox at initialization time, with each variable name mapping to a tool and its value containing the full JSON schema"
     ],
     "answer": 2
   },
@@ -352,10 +352,10 @@
       }
     ],
     "options": [
-      "Re-send the same prompt with the tool name appended to force the model to skip the tool call",
-      "Terminate the agent loop since tool_use indicates the model has completed its task",
+      "Re-send the original user prompt with the tool name appended as a system instruction, forcing the model to bypass the tool call and generate a text-only response instead",
+      "Terminate the agent loop immediately and return the last assistant message to the user, since a stop_reason of tool_use indicates the model has completed its reasoning task",
       "Execute the requested tool, then send a new message with the tool result in a <code>tool_result</code> content block so the model can continue",
-      "Immediately return the tool call parameters to the end user as the final response"
+      "Parse the tool call parameters from the response and return them directly to the end user as the final structured output, treating the tool_use block as the completed answer"
     ],
     "answer": 2
   },
@@ -377,10 +377,10 @@
       }
     ],
     "options": [
-      "Capabilities are dynamically renegotiated on every request based on the current tool being called",
+      "Capabilities are dynamically renegotiated on every individual request based on the tool being invoked, allowing the server to expand or restrict features mid-session as needed",
       "Both the server and client declare their supported features at initialization, and both must respect the declared capabilities throughout the session",
-      "The host broadcasts a universal capability set to all servers, overriding individual server declarations",
-      "Only the server declares capabilities; the client automatically adapts to whatever the server supports"
+      "The host process broadcasts a universal capability set to all connected servers during startup, overriding any individual server declarations to enforce a consistent feature baseline",
+      "Only the server declares its capabilities during initialization; the client has no capability declaration step and automatically adapts its behavior to whatever the server supports"
     ],
     "answer": 1
   },

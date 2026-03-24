@@ -4,10 +4,10 @@
     "domain": "Schema Design & Extraction",
     "text": "An insurance claim processing pipeline extracts claim types from incoming forms. The initial schema has an <code>enum</code> for <code>claim_type</code>: <code>[\"auto\", \"home\", \"health\", \"life\"]</code>. Every month, edge cases appear — an aquatic sports injury, a rideshare vehicle claim, a drone damage claim — and the team keeps adding new enum values. Schema migrations are breaking downstream consumers. What schema design prevents this?",
     "options": [
-      "Use a confidence score — high confidence maps to known types, low confidence indicates edge cases",
+      "Add a confidence score to each extraction and route low-confidence claims to a secondary classifier — known types get high confidence automatically, edge cases get flagged for re-classification before reaching downstream consumers",
       "Add a catch-all <code>\"other\"</code> enum value plus a <code>claim_type_detail</code> string field — known types use the enum; unknown types use 'other' with a description in the detail field",
-      "Use a free-text string field instead of an enum so any claim type can be captured",
-      "Expand the enum every quarter via a scheduled migration to include all newly observed types"
+      "Replace the enum with an unrestricted string field so the model can output any claim type naturally — this eliminates schema migrations entirely and lets downstream consumers parse the free-text value as needed",
+      "Schedule quarterly enum expansions by collecting all novel claim types observed in logs, then run a coordinated schema migration across all downstream consumers to add the new values to the enum"
     ],
     "answer": 1,
     "pattern": "Resilient Schema — Catch-All Enum",
@@ -30,9 +30,9 @@
     "text": "A contract extraction pipeline produces a <code>total_value</code> field. In 6% of contracts, the extracted total doesn't match the sum of line items. The team wants to flag these for human review. Currently, reviewers must manually re-read each contract to verify totals. What schema addition reduces manual work?",
     "options": [
       "Add both <code>stated_total</code> (the total as written in the contract) and <code>calculated_total</code> (sum of all extracted line items) — flag for human review only when they differ",
-      "Add a <code>reviewer_notes</code> field and ask Claude to pre-fill it with a summary when totals seem inconsistent",
-      "Remove the <code>total_value</code> field and require humans to calculate all totals",
-      "Add a <code>confidence</code> score — only review contracts where confidence is below 0.9"
+      "Add a <code>reviewer_notes</code> string field and instruct Claude to pre-fill it with a plain-English explanation of any discrepancy it detects — reviewers read the note instead of re-reading the full contract",
+      "Remove the <code>total_value</code> field entirely from the schema and require human reviewers to calculate all contract totals manually — this eliminates extraction errors at the cost of full human involvement",
+      "Add a <code>confidence</code> float field (0–1) reflecting how certain the model is about the total — flag contracts for human review only when confidence falls below 0.9, skipping review for high-confidence extractions"
     ],
     "answer": 0,
     "pattern": "Mathematical Consistency — Dual Total Fields",
@@ -54,9 +54,9 @@
     "domain": "Schema Design & Extraction",
     "text": "An extraction pipeline needs to normalize date formats across documents. Documents use formats including 'January 15, 2024', '15/01/2024', '2024-01-15', and '15 Jan 24'. Temperature 0 is set but the model still occasionally outputs inconsistent formats. What is the most effective normalization approach?",
     "options": [
-      "Set temperature to 0 and use a strict output schema with a regex pattern constraint",
-      "Post-process the output with a date parsing library that handles all common formats",
-      "Use a validator that retries with stricter instructions when the format is wrong",
+      "Define a strict JSON schema with a regex pattern constraint like <code>^\\d{4}-\\d{2}-\\d{2}$</code> on the date field — combined with temperature 0, the schema enforcement will force the model to always output ISO 8601",
+      "Keep the prompt minimal and post-process all model output with a date parsing library (e.g., dateutil or Moment.js) that auto-detects and converts all common date formats to ISO 8601 after extraction",
+      "Wrap the extraction in a retry loop with a validator — if the output date doesn't match ISO 8601, re-call the model with a stricter instruction like 'You MUST use YYYY-MM-DD format' until it complies",
       "Add 2–3 few-shot examples in the prompt showing each input format mapped to ISO 8601 output — format normalization is a pattern-matching task that responds well to few-shot demonstration"
     ],
     "answer": 3,
@@ -75,9 +75,9 @@
     "domain": "Compliance & Human-in-the-Loop",
     "text": "A financial services agent has a system prompt: <code>\"CRITICAL COMPLIANCE POLICY: Never process transactions above $10,000 without explicit human approval. This is a regulatory requirement.\"</code> Post-launch monitoring shows the agent processes 2.1% of high-value transactions without approval. Strengthening the prompt language has not reduced this rate. What is the correct architectural fix?",
     "options": [
-      "Add the compliance rule to three separate places in the system prompt for reinforcement",
-      "Add a few-shot example showing the agent correctly refusing a $10,000+ transaction",
-      "Use a separate validation model to review each transaction before the main agent processes it",
+      "Reinforce the compliance rule by placing it in three separate locations within the system prompt — the preamble, mid-prompt as a reminder, and as the final instruction — so the model encounters it multiple times during generation",
+      "Add a few-shot example to the system prompt showing the agent correctly detecting a $15,000 transaction request, refusing to process it, and routing it to the human approval queue with the proper compliance message",
+      "Add a second LLM call that acts as a compliance reviewer — before any transaction tool executes, pass the transaction details to this validation model which checks whether human approval is required",
       "Implement an application-layer intercept: before any transaction tool executes, check the amount server-side and block + route to human queue if it exceeds $10,000 — remove model discretion entirely"
     ],
     "answer": 3,
@@ -100,9 +100,9 @@
     "domain": "Compliance & Human-in-the-Loop",
     "text": "A customer support agent detects what might be an escalation need. The system uses a sentiment classifier (negative > 0.7 triggers escalation) and asks the model to rate its own confidence on a 1–10 scale (below 6 triggers escalation). After launch, the escalation rate is 3× higher than expected, with many false positives. What is the most reliable escalation trigger?",
     "options": [
-      "Add a second model call to validate the escalation decision before triggering",
-      "Use only the sentiment classifier and remove the self-confidence scale",
-      "Calibrate the sentiment threshold to 0.85 and the confidence threshold to 4 to reduce false positives",
+      "Add a second, independent model call that receives the conversation context and validates whether escalation is truly warranted — only escalate when both the original agent and the validation model agree",
+      "Remove the self-confidence rating and rely solely on the sentiment classifier at the 0.7 threshold — the dual-trigger system creates redundant escalation paths that multiply false positives unnecessarily",
+      "Keep both signals but raise the sentiment threshold to 0.85 and lower the confidence threshold to 4 — tightening the numeric boundaries will filter out the marginal cases causing most false positives",
       "Replace both with explicit categorical rules: escalate on (1) explicit 'I want a human,' (2) mentions of legal/regulatory terms, (3) threat of account cancellation — triggers that have clear semantic meaning"
     ],
     "answer": 3,
@@ -125,10 +125,10 @@
     "domain": "Compliance & Human-in-the-Loop",
     "text": "A customer support agent escalates a complex billing dispute to a human agent. The escalation payload currently passes the full 47-turn conversation transcript. Human agents spend 8–12 minutes reading context before they can help the customer. What is the correct escalation handoff design?",
     "options": [
-      "Let the human agent request specific turns from the transcript as needed via a lookup tool",
+      "Build an on-demand lookup tool that lets the human agent search and retrieve specific turns from the transcript by keyword or topic — the agent pulls only what they need rather than reading everything",
       "Pass a structured summary payload: <code>{customer_id, issue_type, root_cause, actions_taken, failed_resolutions, recommended_action}</code> — dense, structured, immediately actionable",
-      "Pass only the most recent 10 turns to give the human agent the latest context",
-      "Pass the full transcript but add a TL;DR summary at the beginning"
+      "Truncate the transcript to the most recent 10 turns and pass only those — the latest messages contain the current state of the dispute and are sufficient for the human agent to continue the conversation",
+      "Pass the full 47-turn transcript but prepend a model-generated TL;DR paragraph at the top — the human agent reads the summary first and scrolls into the transcript only if they need more detail"
     ],
     "answer": 1,
     "pattern": "Structured Escalation Handoff",
@@ -146,10 +146,10 @@
     "domain": "Error Handling & Validation",
     "text": "A medical records extraction tool returns this response when the patient record database is unreachable: <code>{\"medications\": [], \"diagnoses\": [], \"allergies\": []}</code>. The downstream agent interprets these as confirmed empty fields and updates the patient profile with no medications, no diagnoses, and no allergies. What is wrong and how should the tool response be fixed?",
     "options": [
-      "Return <code>null</code> instead of <code>[]</code> for each field when the database is unreachable",
-      "Add a warning message to the response: 'Database may be unreachable, please verify'",
+      "Return <code>{\"medications\": null, \"diagnoses\": null, \"allergies\": null}</code> when the database is unreachable — null values signal missing data rather than confirmed empty, letting downstream agents distinguish the two states",
+      "Include a <code>warning</code> string field in the normal response payload: <code>{\"medications\": [], \"warning\": \"Database may be unreachable, please verify results\"}</code> — the agent can check the warning before acting",
       "Return <code>{isError: true, errorCategory: \"transient\", isRetryable: true, message: \"Patient record database unreachable — all fields unverified\"}</code> — structurally distinct from a valid empty record",
-      "Throw an exception so the calling agent knows something went wrong"
+      "Throw an unhandled exception from the tool function so the calling agent's error handler catches it — exceptions naturally halt processing and prevent the downstream agent from misinterpreting empty arrays"
     ],
     "answer": 2,
     "pattern": "Graceful Tool Failure — Access vs Valid Empty",
@@ -172,9 +172,9 @@
     "text": "A pipeline extracts financial data across 50,000 documents monthly. A progress report after 3 months shows: overall accuracy 91%, goal achieved. A deeper analysis reveals: standard invoices (72% of volume) = 99% accuracy; international invoices with foreign currencies (18%) = 78%; handwritten receipts (10%) = 45%. What should happen next?",
     "options": [
       "Pause automation for handwritten receipts and international invoices; implement segmented thresholds: standard invoices remain fully automated, handwritten receipts require human review, international invoices use a lower automation threshold with spot-checking",
-      "Add more training examples for handwritten receipts and international invoices and re-evaluate",
-      "The 91% aggregate exceeds the target — proceed with full automation",
-      "Increase the confidence threshold from 90% to 95% to catch more errors"
+      "Generate additional few-shot examples specifically for handwritten receipts and international invoices, retrain the extraction prompts with these examples, and re-evaluate accuracy after the next monthly cycle",
+      "The 91% aggregate accuracy exceeds the original goal — proceed with full automation across all document types and continue monitoring the monthly aggregate metric for any future regression",
+      "Raise the global confidence threshold from 90% to 95% across all document types — this will catch more extraction errors in the weaker categories while maintaining high throughput for standard invoices"
     ],
     "answer": 0,
     "pattern": "Segmented Confidence Thresholds",
@@ -193,9 +193,9 @@
     "text": "A pipeline processes 10,000-word regulatory documents into structured summaries. Over time, the summaries show degraded quality for information in the middle of long documents: key dates and percentages are missing or vague, while content from the first and last sections is reliably extracted. No changes were made to the prompt or model. What is the cause and fix?",
     "options": [
       "The lost-in-the-middle effect: models attend more strongly to content at the beginning and end of long contexts. Fix: restructure extraction to place a 'critical facts block' at the beginning and end of the prompt, not buried in the middle",
-      "The model's context window has been exceeded — use chunking to process documents in parts",
-      "The summarization instruction needs to be more specific about which sections to prioritize",
-      "Temperature drift in long contexts — reduce temperature to 0 for long document processing"
+      "The 10,000-word documents exceed the model's effective context window capacity — split each document into 2,000-word chunks, extract from each chunk independently, then merge the structured results into a single summary",
+      "The summarization instruction is too generic and doesn't specify which sections matter most — add explicit instructions listing the section types (dates, percentages, key terms) that must always be included in the output",
+      "Long input contexts cause implicit temperature drift where the model becomes less deterministic mid-document — set temperature to 0 and add a deterministic decoding parameter to ensure consistent extraction throughout"
     ],
     "answer": 0,
     "pattern": "Lost-in-the-Middle Effect",
@@ -217,10 +217,10 @@
     "domain": "Error Handling & Validation",
     "text": "A contract analysis pipeline uses Pydantic to validate structured output. The model produces valid JSON that passes schema validation, but downstream consumers report that <code>jurisdiction</code> values contain entries like <code>\"New York, NY\"</code> when the field is defined as an ISO 3166-2 state code. The schema passes validation but the semantic content is wrong. What validation approach catches this?",
     "options": [
-      "Add few-shot examples showing the correct jurisdiction format",
-      "Add regex validation to reject entries containing commas",
+      "Add few-shot examples to the prompt showing correct ISO 3166-2 codes for common jurisdictions like 'US-NY' and 'US-CA' — the model will learn the expected format from examples and stop producing full city-state strings",
+      "Add a regex-based Pydantic validator that rejects any jurisdiction value containing commas or spaces — this catches entries like 'New York, NY' while still allowing properly formatted codes to pass through",
       "Extend Pydantic validators with semantic validation: field-level validators that check enum membership (valid ISO codes), format constraints (length, pattern), and cross-field consistency — not just structural type-checking",
-      "Increase the model's temperature to explore more output variation"
+      "Increase the model's temperature to 0.7 to encourage the model to explore a wider variety of output formats — at low temperatures the model tends to repeat patterns it has seen most often in training data"
     ],
     "answer": 2,
     "pattern": "Pydantic — Structural vs Semantic Validation",
@@ -255,9 +255,9 @@
       }
     ],
     "options": [
-      "Use a single price field of type number and append a free-text notes field where Claude can describe any additional prices.",
-      "Define separate top-level fields for original_price, sale_price, and bulk_price, each marked required, and let Claude fill nulls for missing values.",
-      "Define prices as a dictionary with dynamic keys so Claude can invent descriptive key names for each price type it finds.",
+      "Use a single price field of type number along with a free-text notes field for additional prices, and instruct Claude to concatenate all price variants into the notes string separated by semicolons for downstream parsing.",
+      "Define separate top-level required fields for original_price, sale_price, and bulk_price, each as nullable numbers, and instruct Claude to fill null for any price not found — this ensures all variants are captured in fixed positions.",
+      "Define prices as a dictionary with dynamic string keys so Claude can create descriptive key names like 'bulk_10_units' for each price variant, allowing flexible capture of any number of price types without a fixed schema.",
       "Define prices as an array of objects with required fields for price_type (enum) and amount, plus an optional currency field, and instruct Claude to only populate entries explicitly stated in the source text."
     ],
     "answer": 3
@@ -280,10 +280,10 @@
       }
     ],
     "options": [
-      "Rely on Claude's system prompt to state 'always use ISO 8601' — no additional validation is needed in production.",
+      "Add a strongly-worded system prompt instruction stating 'always use ISO 8601 format for all dates' and rely on Claude's instruction-following capability — prompt-level enforcement is sufficient for production date formatting.",
       "Apply a post-extraction semantic validation layer that checks field values against format regexes and domain constraints, then routes failures back through a correction prompt with the specific error.",
-      "Increase the temperature to 0 so Claude never produces informal date formats.",
-      "Add a JSON Schema with type: string for the date field, which will ensure only ISO dates are returned."
+      "Set the temperature to 0 for all extraction calls, which eliminates sampling randomness and guarantees that Claude will always produce formally correct ISO 8601 dates rather than informal expressions like 'next Tuesday'.",
+      "Define the date field as type: string with format: date-time in your JSON Schema tool definition, which causes the API to reject any response where the date value does not conform to ISO 8601 before it reaches your application."
     ],
     "answer": 1
   },
@@ -372,10 +372,10 @@
       }
     ],
     "options": [
-      "Append a closing brace to the truncated response to make it valid JSON, then parse normally.",
-      "Set max_tokens to the maximum allowed value for all requests to ensure truncation never occurs.",
+      "Append the appropriate closing braces and brackets to the truncated JSON string to make it syntactically valid, then parse it normally — this recovers the partial data without requiring an additional API call.",
+      "Set max_tokens to the model's maximum allowed value on every request to guarantee that truncation never occurs, eliminating the need for any stop_reason checking or retry logic in your pipeline.",
       "Check stop_reason before parsing; if it is max_tokens, either increase max_tokens and retry, or use a continuation prompt that asks Claude to complete the JSON from the truncation point.",
-      "Wrap the JSON.parse call in a try/catch and return a null result on failure — truncation is rare enough to ignore."
+      "Wrap the JSON.parse call in a try/catch block and return a null result on parse failure, then log the incident for monitoring — truncation is statistically rare enough that silent failure is acceptable in production."
     ],
     "answer": 2
   },
@@ -397,10 +397,10 @@
       }
     ],
     "options": [
-      "Claude will refuse to process chunks that lack full document context; mitigate by including the table of contents in every chunk.",
-      "The overlapping text doubles the total token cost; mitigate by removing all overlap and using strictly non-overlapping chunks.",
+      "Claude will refuse to process individual chunks that lack full document context, returning empty results; mitigate by prepending the document's table of contents and section headers to every chunk so Claude understands the broader structure.",
+      "The overlapping text regions double the total token cost without improving accuracy; mitigate by removing all overlap and using strictly non-overlapping sequential chunks, which eliminates redundant processing while preserving full coverage.",
       "Duplicate entities extracted from overlapping regions; mitigate by including unique identifiers in the schema and running a post-extraction deduplication pass that merges records by ID or key fields.",
-      "Overlapping chunks cause Claude to hallucinate contradictions; mitigate by setting temperature to 0 for all chunk extractions."
+      "Overlapping chunks cause Claude to hallucinate contradictory values for the same entity across different chunks; mitigate by setting temperature to 0 for all chunk extraction calls, which ensures deterministic and consistent output across chunks."
     ],
     "answer": 2
   },
@@ -422,10 +422,10 @@
       }
     ],
     "options": [
-      "Ask Claude to self-validate by adding an instruction: 'Only output valid ICD-10 codes' — no further checks needed.",
+      "Include a system prompt instruction telling Claude to 'only output valid ICD-10 codes that exist in the official codebook' — Claude's medical training data includes ICD-10 knowledge, so prompt-level enforcement is sufficient for compliance.",
       "Validate the extracted code against the ICD-10 codebook in an application-layer post-check, and route non-matching codes to a human reviewer queue with the source text attached.",
-      "Use a regex to check that the extracted code matches the ICD-10 format (letter + digits) and accept it if the format is valid.",
-      "Include the entire ICD-10 codebook in the system prompt so Claude can only select valid codes."
+      "Use a regex pattern to validate that the extracted code matches ICD-10 formatting rules (one letter followed by two to seven alphanumeric characters) and accept any code that passes the format check as compliant.",
+      "Include the complete ICD-10 codebook as a reference document in the system prompt so Claude can look up and select only valid codes during extraction, ensuring compliance without any post-processing validation step."
     ],
     "answer": 1
   },
@@ -448,9 +448,9 @@
     ],
     "options": [
       "The API enforces structural JSON schema conformance (types, required fields) but does not enforce semantic business rules — application-layer validation is still required.",
-      "The stop_reason of tool_use indicates the output failed schema validation and should be retried automatically.",
-      "The API fully validates all field values including business constraints expressed in the tool description, so this scenario cannot occur.",
-      "Tool use mode bypasses all schema validation, so the application must validate both structure and types manually."
+      "A stop_reason of tool_use indicates that the API detected a schema validation failure in the output and is signaling your application to retry the request automatically with the same parameters until validation passes.",
+      "The API validates all field values against both the JSON schema structure and any semantic business constraints described in the tool's description text, so a negative quantity in the output indicates a bug in your tool definition.",
+      "Tool use mode bypasses all built-in schema validation entirely to maximize flexibility, so the application must manually validate both structural conformance (types, required fields) and business rules in its own post-processing layer."
     ],
     "answer": 0
   },
@@ -472,10 +472,10 @@
       }
     ],
     "options": [
-      "Rely on Claude's citation feature alone without any downstream verification, since citations are guaranteed verbatim.",
+      "Rely on Claude's built-in citation feature by enabling citations in the API request, which guarantees that all returned quotes are verbatim substrings of the source document without requiring any downstream verification step.",
       "Instruct Claude to return the exact quote and then programmatically verify that each source_quote is a substring of the input document, flagging mismatches for review.",
-      "Use a high temperature (e.g., 0.9) so Claude explores more of the source text when selecting quotes.",
-      "Ask Claude to return the character offset and length of the quote instead of the text itself, since offsets are always accurate."
+      "Set temperature to a high value like 0.9 to encourage Claude to explore more of the source document when selecting supporting quotes, which increases the likelihood of finding the most relevant verbatim passage for each fact.",
+      "Instruct Claude to return the character start offset and length for each quote instead of the quote text itself, then extract the substring programmatically — offset-based referencing is more reliable than asking Claude to copy text verbatim."
     ],
     "answer": 1
   }

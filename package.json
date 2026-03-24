@@ -13,7 +13,8 @@
     "extract": "node scripts/extract-questions.js",
     "migrate": "node scripts/migrate-to-json.js",
     "screenshot": "node scripts/screenshot.js",
-    "check-urls": "node scripts/tools/check_urls.js"
+    "check-urls": "node scripts/tools/check_urls.js",
+    "rebalance": "node scripts/tools/rebalance_options.js"
   },
   "engines": {
     "node": ">=22.1.0"

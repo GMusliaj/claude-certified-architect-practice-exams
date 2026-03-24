@@ -110,6 +110,7 @@ Quality standards:
 - Every question must test a SPECIFIC, NAMED production pattern, anti-pattern, or API behaviour
 - Exactly one unambiguously correct answer — if a knowledgeable architect would debate it, rewrite the question
 - Three plausible distractors: each must be something an inexperienced developer might genuinely choose
+- CRITICAL — option length balance: all four options (correct + 3 distractors) must be roughly the same length and level of detail. Distractors must be specific and confident, not vague or brief. A test-taker must NOT be able to identify the correct answer by length alone. If your correct answer is 2 sentences, your distractors must also be ~2 sentences. Never write a long, detailed correct answer alongside short, one-phrase distractors.
 - Question stems may use HTML: <code> for inline code, <em> for emphasis — nothing else
 - All claims must be grounded in official Anthropic documentation
 - refs must link to real, verified documentation URLs — never a top-level index page

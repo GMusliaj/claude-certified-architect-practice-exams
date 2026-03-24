@@ -4,9 +4,9 @@
     "domain": "Agentic Architecture & Orchestration",
     "text": "A multi-step document analysis agent processes 200-page PDFs. The API returns <code>stop_reason: \"max_tokens\"</code> with a partial <code>text</code> block mid-sentence. The developer currently treats this identically to <code>stop_reason: \"end_turn\"</code> and moves on. What is the correct handling?",
     "options": [
-      "Restart the entire document analysis from scratch with a higher <code>max_tokens</code> value",
-      "Treat it as a fatal error — partial responses cannot be safely continued",
-      "Increase the system prompt's verbosity limit and resubmit the original request",
+      "Discard the partial response entirely, double the <code>max_tokens</code> parameter, and resubmit the original request so the model generates the complete output in a single pass",
+      "Treat <code>max_tokens</code> as a terminal error condition — log the partial output for debugging, then raise an exception so the caller can decide whether to retry with a shorter document",
+      "Inject a new user message saying \"please continue from where you left off\" along with a copy of the last 500 characters of the partial output so the model knows where to resume",
       "Append the partial <code>assistant</code> message to history as-is, then send a continuation request with no new user content so the model resumes from where it stopped"
     ],
     "answer": 3,
@@ -46,9 +46,9 @@
     "domain": "Agentic Architecture & Orchestration",
     "text": "A code review subagent is defined with <code>allowed_tools: [\"Read\", \"Grep\", \"Glob\", \"Write\", \"Bash\"]</code>. During a security audit, the agent uses <code>Bash</code> to run <code>git push</code> unexpectedly after making edits. What is the minimal and most reliable fix?",
     "options": [
-      "Set <code>tool_choice: {\"type\": \"auto\"}</code> to prevent unsolicited tool use",
-      "Add a PreToolUse hook that logs all Bash commands for post-hoc review",
-      "Add a system prompt instruction: \"Never run git commands or push code\"",
+      "Set <code>tool_choice: {\"type\": \"auto\"}</code> on the subagent configuration — this ensures the model requests permission before invoking any tool rather than calling them autonomously",
+      "Add a <code>PreToolUse</code> hook that logs every Bash command and flags dangerous patterns, but keep all five tools in <code>allowed_tools</code> so the agent retains full capability when needed",
+      "Add an explicit system prompt instruction: \"You are a read-only review agent. Never run git commands, write files, or execute shell commands that modify state\" while keeping the current tool list",
       "Remove <code>Write</code> and <code>Bash</code> from <code>allowed_tools</code> — a review agent only needs <code>Read</code>, <code>Grep</code>, and <code>Glob</code>"
     ],
     "answer": 3,
@@ -88,10 +88,10 @@
     "domain": "Agentic Architecture & Orchestration",
     "text": "An architect wants to compare two refactoring approaches — microservice extraction vs in-place simplification — starting from a codebase analysis that took 45 minutes to complete. What is the correct approach?",
     "options": [
-      "Start two completely new sessions from scratch so each begins with clean context",
+      "Start two completely new sessions from scratch — each session re-runs the 45-minute codebase analysis independently so that both approaches begin with clean, uncontaminated context",
       "Use <code>fork_session</code> to create two independent branches from the completed analysis — each branch explores its approach without contaminating the other",
-      "Complete Approach A, save a summary to a file, then start Approach B with the summary as context",
-      "Run both approaches in the same session, clearly labeling \"Approach A:\" and \"Approach B:\" sections"
+      "Complete Approach A fully in the current session, save a structured summary to a markdown file, then start a new session for Approach B and load that summary as initial context",
+      "Run both approaches sequentially in the same session using clearly labeled sections like \"Approach A:\" and \"Approach B:\" — the model will keep them separated as long as headings are distinct"
     ],
     "answer": 1,
     "pattern": "fork_session for Parallel Exploration",
@@ -109,10 +109,10 @@
     "domain": "Agentic Architecture & Orchestration",
     "text": "A 12-subagent research pipeline crashes at subagent 7 after 90 minutes. No intermediate state was persisted. The team must restart entirely from scratch. What architectural change prevents this in future runs?",
     "options": [
-      "Wrap the coordinator in a try/catch and log the final error to a monitoring service",
-      "Set <code>max_retries: 3</code> on each <code>Task</code> invocation to auto-recover from transient crashes",
+      "Wrap the entire coordinator loop in a try/catch block and log the error details to a monitoring service so the team gets alerted faster, reducing the perceived cost of a full restart",
+      "Set <code>max_retries: 3</code> on each subagent <code>Task</code> invocation so transient failures are automatically retried — this ensures subagent 7 recovers without manual intervention",
       "Each subagent writes its findings to a structured <code>agent-state/{name}.json</code> file upon successful completion; on restart, the coordinator reads these files and skips already-completed agents",
-      "Use a single shared in-memory variable in the coordinator to track completed subagent IDs"
+      "Store all completed subagent IDs in a shared in-memory array within the coordinator process; on restart, the coordinator checks this array and skips agents that already finished"
     ],
     "answer": 2,
     "pattern": "Structured State Persistence for Crash Recovery",
@@ -130,10 +130,10 @@
     "domain": "Agentic Architecture & Orchestration",
     "text": "A coordinator spawns 8 parallel subagents, each returning detailed 15,000-token reports. The coordinator's synthesis step fails with context limit errors. What is the correct fix?",
     "options": [
-      "Run the synthesis in a separate model with a larger context window",
-      "Increase the coordinator's <code>max_tokens</code> parameter to 200,000",
+      "Route the synthesis step to a separate model instance configured with a 200K context window so it can ingest all eight full-length reports without hitting token limits",
+      "Increase the coordinator's <code>max_tokens</code> parameter to 200,000 so the combined 120,000 tokens of subagent output plus the synthesis prompt fit within the generation budget",
       "Instruct each subagent in its <code>Task</code> prompt to return a structured JSON summary capped at 1,500 tokens instead of the full report",
-      "Switch to sequential subagent execution so reports arrive one at a time"
+      "Switch from parallel to sequential subagent execution so reports arrive one at a time — the coordinator synthesizes each report incrementally and discards it before the next arrives"
     ],
     "answer": 2,
     "pattern": "Subagent Token Budget Enforcement",
@@ -151,9 +151,9 @@
     "domain": "Agentic Architecture & Orchestration",
     "text": "A developer productivity agent generates database migration SQL. On 3 of the last 10 runs, the SQL contained syntax errors discovered only at execution time. Which architecture catches these before they reach production?",
     "options": [
-      "Retry generation 3 times and use the most common output by majority vote",
-      "Add a system prompt instruction: \"Double-check your SQL for syntax errors before responding\"",
-      "Ask the model to rate its own confidence in the SQL; proceed only if confidence > 8/10",
+      "Run the generation step three times independently and compare outputs — use majority-vote selection to pick the SQL statement that appears most frequently across the three runs",
+      "Add a system prompt instruction telling the model to carefully double-check its SQL for syntax errors and only return the query once it is confident the syntax is fully correct",
+      "Ask the model to append a self-assessed confidence score from 1–10 alongside the SQL; only pass the migration to production if the model rates its own confidence above 8 out of 10",
       "Run the generated SQL through a syntax validator immediately after generation; on failure, inject the error back into the prompt and regenerate before returning to the user"
     ],
     "answer": 3,
@@ -193,9 +193,9 @@
     "domain": "Agentic Architecture & Orchestration",
     "text": "A research coordinator receives this from a web-search subagent: <code>{\"status\": \"partial_failure\", \"failure_type\": \"timeout\", \"partial_results\": [{\"title\": \"AI market 2024\"}], \"coverage_impact\": \"Missing: Asia-Pacific data\"}</code>. What should the coordinator do?",
     "options": [
-      "Retry the exact same subagent call immediately with no changes",
-      "Abort the entire research pipeline and return an error to the user",
-      "Replace the missing data with a synthesized estimate based on other regional results",
+      "Retry the exact same web-search subagent call immediately with identical parameters — timeouts are typically transient and a second attempt will almost always return the full result set",
+      "Abort the entire research pipeline and return an error to the user explaining that incomplete data was received, since presenting partial results could lead to incorrect conclusions",
+      "Use the model to synthesize plausible Asia-Pacific data by extrapolating from the other regional results that were successfully returned, filling the gap with estimated figures",
       "Use the partial results for available coverage and explicitly annotate the gap: \"Asia-Pacific: NOT COVERED — search timeout\" in the final report"
     ],
     "answer": 3,
@@ -257,9 +257,9 @@
     "text": "A research coordinator must query 8 independent industry databases. Current implementation: sequential subagent calls, total runtime 160 seconds. Each query is fully independent. What implementation achieves ~20 second runtime?",
     "options": [
       "Invoke all 8 subagents via the <code>Task</code> tool in a single coordinator response before awaiting any results — they execute concurrently",
-      "Use the Batch API to send all 8 queries as a single batch request",
-      "Use <code>tool_choice: {\"type\": \"any\"}</code> on each subagent to enable parallel execution",
-      "Spawn one subagent and instruct it to query all 8 databases sequentially in its own session"
+      "Submit all 8 queries using the Batch API as a single batch request — the Batch API processes items concurrently on the server side and returns all results in roughly 20 seconds",
+      "Set <code>tool_choice: {\"type\": \"any\"}</code> on each subagent's configuration to enable the runtime to schedule all eight tool calls in parallel rather than sequentially",
+      "Spawn a single subagent with an expanded prompt that instructs it to query all 8 databases within its own session — consolidating into one agent eliminates inter-agent coordination overhead"
     ],
     "answer": 0,
     "pattern": "Parallel Subagent Spawning",
@@ -277,10 +277,10 @@
     "domain": "Agentic Architecture & Orchestration",
     "text": "A coordinator agent is defined with <code>allowed_tools: [\"Read\", \"Grep\", \"Glob\", \"WebSearch\"]</code>. When it tries to delegate work to a subagent, delegation silently fails and the coordinator attempts to do all the work itself. What is the cause?",
     "options": [
-      "The <code>Task</code> tool is only available to root-level agents, not nested coordinators",
+      "The <code>Task</code> tool is a built-in capability reserved for root-level agents only — nested coordinators cannot spawn their own subagents regardless of their <code>allowed_tools</code> list",
       "The coordinator's <code>allowed_tools</code> does not include <code>\"Task\"</code> — without it, the coordinator cannot invoke subagents",
-      "Subagent spawning requires <code>tool_choice: {\"type\": \"any\"}</code> to be set on the coordinator",
-      "Subagents must be pre-registered with the coordinator in a registry before they can be spawned"
+      "Subagent delegation requires <code>tool_choice: {\"type\": \"any\"}</code> to be set on the coordinator so the model is permitted to select the <code>Task</code> tool from available options",
+      "Subagents must be pre-registered in a <code>subagent_registry</code> configuration block on the coordinator before they can be spawned — without registration, delegation calls are silently dropped"
     ],
     "answer": 1,
     "pattern": "Task Tool Must Be in allowedTools",
@@ -298,9 +298,9 @@
     "domain": "Agentic Architecture & Orchestration",
     "text": "A multi-agent research system produces reports where some topics are completely missing because subagents timed out. Users are treating the silence as \"no findings\" rather than \"not investigated.\" What is the correct design?",
     "options": [
-      "Set <code>max_retries: 5</code> on each subagent <code>Task</code> call to eliminate timeouts",
-      "Retry all failed subagents until they succeed before generating the final report",
-      "Add a confidence score to each section — users can infer gaps from low scores",
+      "Set <code>max_retries: 5</code> on each subagent <code>Task</code> invocation so timed-out searches are retried aggressively — this eliminates the missing-topic problem by ensuring every subagent eventually succeeds",
+      "Queue all failed subagents for automatic retry in a loop until every one succeeds before generating the final report — this guarantees complete coverage even if it increases total runtime significantly",
+      "Add a numeric confidence score (0–10) to each report section header so users can infer which topics may have gaps — sections with scores below 5 signal that coverage is likely incomplete",
       "The coordinator explicitly annotates each uncovered topic: \"Asia-Pacific Markets: NOT COVERED — search agent timed out\" rather than omitting the section"
     ],
     "answer": 3,
@@ -319,10 +319,10 @@
     "domain": "Agentic Architecture & Orchestration",
     "text": "A procurement agent autonomously creates purchase orders up to $10,000. For orders above $10,000, the agent completes the full workflow and then sends a notification email to a human approver. Approvers are rejecting 23% of completed orders, requiring costly reversals. What is the correct fix?",
     "options": [
-      "Run the order workflow on a 24-hour delay so approvers can cancel before execution",
-      "Lower the autonomous threshold to $5,000 so fewer large orders complete without review",
+      "Add a PostToolUse hook after <code>create_purchase_order</code> that checks the order total and sends a reversal request automatically if the amount exceeds $10,000 — this catches high-value orders after creation",
+      "Lower the autonomous threshold from $10,000 to $5,000 so that fewer large orders complete without review — this reduces the reversal rate by shrinking the unreviewed range",
       "Insert the human review checkpoint before the <code>create_purchase_order</code> tool call executes — intercept via PreToolUse hook and pause the workflow pending approval",
-      "Add a system prompt: \"For orders above $10,000, state REQUIRES APPROVAL in your response before proceeding\""
+      "Add a system prompt instruction: \"For orders above $10,000, output REQUIRES_APPROVAL and wait for confirmation before calling any tools\" — the model will pause itself before proceeding"
     ],
     "answer": 2,
     "pattern": "Human-in-the-Loop Insertion Point",
@@ -361,10 +361,10 @@
     "domain": "Tool Design & MCP Integration",
     "text": "A data extraction pipeline must always return structured JSON, never free-form text. The prompt instructs the model to \"return a JSON object,\" but 4% of responses are plain English summaries. What API parameter eliminates this?",
     "options": [
-      "Add <code>\"ALWAYS respond with JSON only\"</code> to the system prompt",
-      "Use <code>stop_sequences: [\"}\"]</code> to truncate responses after the closing brace",
+      "Add <code>response_format: {\"type\": \"json_object\"}</code> to the API request — this is the dedicated parameter that constrains the model to return only valid JSON structures",
+      "Use <code>stop_sequences: [\"}\"]</code> to truncate the response after the first closing brace — this ensures the output ends as a JSON object and prevents free-text continuations",
       "Set <code>tool_choice: {\"type\": \"any\"}</code> — this forces the model to call a tool on every response, eliminating free-text output",
-      "Set <code>temperature: 0</code> to make the model deterministic"
+      "Set <code>temperature: 0</code> to make the model fully deterministic — at zero temperature the model always follows the JSON instruction exactly, eliminating the 4% plain-text variance"
     ],
     "answer": 2,
     "pattern": "tool_choice: any — Structured Output Guarantee",
@@ -383,9 +383,9 @@
     "text": "An agent repeatedly calls <code>get_schema()</code>, <code>get_field_definitions()</code>, and <code>get_validation_rules()</code> at the start of every session, consuming 12,000 tokens in setup tool calls before doing any work. These values never change during a session. What MCP feature eliminates these redundant calls?",
     "options": [
       "Expose the schema, field definitions, and validation rules as MCP Resources — the agent subscribes once and references them directly without repeated tool calls",
-      "Cache the tool results in a global JavaScript variable initialized before the agent starts",
-      "Combine all three tools into a single <code>get_config()</code> tool to reduce call count to one",
-      "Set <code>tool_choice: {\"type\": \"none\"}</code> at session start to suppress tool calls during configuration"
+      "Cache the tool results in a global variable on the client side initialized before the agent starts — subsequent sessions read from cache instead of making redundant tool calls",
+      "Combine all three tools into a single <code>get_config()</code> tool that returns schema, field definitions, and rules in one payload — this reduces the setup overhead from three calls to one",
+      "Set <code>tool_choice: {\"type\": \"none\"}</code> at session start to suppress tool calls during the configuration phase — then switch to <code>\"auto\"</code> once the agent begins real work"
     ],
     "answer": 0,
     "pattern": "MCP Resources — Content Catalog",
@@ -404,9 +404,9 @@
     "text": "A team's <code>.mcp.json</code> file is committed to a public GitHub repo containing: <code>\"env\": {\"GITHUB_TOKEN\": \"ghp_realtoken123\"}</code>. What is the vulnerability and the correct fix?",
     "options": [
       "The hardcoded token is exposed in version control — replace with <code>\"GITHUB_TOKEN\": \"${GITHUB_TOKEN}\"</code> and load the value from an environment variable or secrets manager",
-      "Rotate the token weekly; the static token is the primary vulnerability",
-      "The token should be stored in the system prompt instead, which is not version-controlled",
-      "Move the entire <code>.mcp.json</code> to <code>~/.claude.json</code> so it is not committed to the repo"
+      "Rotate the token on a weekly schedule and update <code>.mcp.json</code> with each new value — the primary vulnerability is token staleness, and frequent rotation limits the exposure window",
+      "Move the token into the project's <code>CLAUDE.md</code> file instead, which is read by the agent at runtime but is typically excluded from public repository indexing by search engines",
+      "Move the entire <code>.mcp.json</code> file to the user-level <code>~/.claude.json</code> so it lives outside the repository — this keeps the token functional but removes it from version control"
     ],
     "answer": 0,
     "pattern": "MCP Secret Management — Environment Variables",
@@ -467,9 +467,9 @@
     "text": "Two tools have these descriptions: <code>analyze_document: \"Analyzes content\"</code> and <code>web_search: \"Searches for content\"</code>. Document analysis tasks are routed to <code>web_search</code> 40% of the time. What is the most effective fix?",
     "options": [
       "Rewrite descriptions to state the contrast explicitly: <code>analyze_document: \"Processes a provided document from local storage or upload; use when content is already available. Do NOT use to find new information online.\"</code>",
-      "Add few-shot examples before the user request showing correct tool selection",
-      "Add a system prompt: \"Use analyze_document for local files, web_search for internet queries\"",
-      "Rename the tools to <code>document_only_analyzer</code> and <code>internet_only_searcher</code>"
+      "Add few-shot examples in the system prompt showing three correct routing decisions — the model will pattern-match on examples and select the right tool more reliably than from descriptions alone",
+      "Add a one-line system prompt instruction: \"Use analyze_document for local files and web_search for internet queries\" — the model will follow explicit routing rules over ambiguous tool descriptions",
+      "Rename the tools to <code>local_document_analyzer</code> and <code>internet_web_searcher</code> — embedding the scope in the tool name itself disambiguates selection without changing descriptions"
     ],
     "answer": 0,
     "pattern": "Tool Description — Explicit Differentiation",
@@ -487,10 +487,10 @@
     "domain": "Tool Design & MCP Integration",
     "text": "A dependency analysis MCP tool <code>analyze_dependencies(repo_path)</code> returns a 500-line report covering imports, transitive deps, and circular references. Agents only need circular dependency detection most of the time, consuming excessive tokens. What is the correct refactor?",
     "options": [
-      "Add caching so the 500-line report is stored and returned from cache on repeated calls",
+      "Add an LRU cache layer in front of <code>analyze_dependencies</code> so the 500-line report is stored and returned from cache on repeated calls — this eliminates redundant token consumption after the first invocation",
       "Split into three single-purpose tools: <code>list_imports</code>, <code>resolve_transitive_deps</code>, <code>detect_circular_deps</code> — agents select only what they need",
-      "Move the detailed report to an MCP Resource so it doesn't consume tool call tokens",
-      "Add a <code>report_type</code> parameter: <code>analyze_dependencies(repo_path, report_type: \"circular\" | \"imports\" | \"full\")</code>"
+      "Expose the full dependency report as an MCP Resource instead of a tool — agents can subscribe to it once and reference specific sections without repeated tool call overhead",
+      "Add a <code>report_type</code> parameter to the existing tool: <code>analyze_dependencies(repo_path, report_type: \"circular\" | \"imports\" | \"full\")</code> — the agent passes the scope it needs and receives a smaller response"
     ],
     "answer": 1,
     "pattern": "Granular MCP Tool Design",
@@ -508,10 +508,10 @@
     "domain": "Tool Design & MCP Integration",
     "text": "A document analysis agent has access to a general-purpose <code>fetch_url</code> tool for loading documents. In production, the agent starts using <code>fetch_url</code> to query competitor websites mid-analysis. What is the correct architectural fix?",
     "options": [
-      "Set <code>tool_choice: {\"type\": \"auto\"}</code> so the model only calls the tool when it genuinely needs it",
-      "Add a PostToolUse hook that validates the URL against an allowlist and discards non-approved responses",
+      "Set <code>tool_choice: {\"type\": \"auto\"}</code> so the model decides whether to call <code>fetch_url</code> on each turn — this lets the model self-regulate and only invoke the tool when genuinely required for analysis",
+      "Add a PreToolUse hook that validates the URL argument against a domain allowlist before execution — requests to non-approved domains are blocked and the agent receives an error message to stay on task",
       "Replace <code>fetch_url</code> with a purpose-specific <code>load_document(document_id)</code> tool that only accepts pre-approved document IDs — this eliminates the unintended browsing capability at the API level",
-      "Add a system prompt: \"Only use fetch_url for documents provided by the user, never for browsing\""
+      "Add a system prompt instruction: \"Only use fetch_url to load documents provided by the user. Never use it to browse competitor websites or any external sites not explicitly referenced in the task.\""
     ],
     "answer": 2,
     "pattern": "General-Purpose Tool Constraint",
@@ -529,10 +529,10 @@
     "domain": "Tool Design & MCP Integration",
     "text": "A developer configured a Jira MCP server in <code>~/.claude.json</code> for personal experimentation. Three months later, the team wants all developers to use the same Jira integration. What change enables team-wide access?",
     "options": [
-      "Add the Jira server URL to the project's <code>CLAUDE.md</code> file so Claude knows to connect to it",
-      "Create a shared <code>~/.claude.json</code> template and distribute it via email",
+      "Add the Jira server URL and connection details to the project's <code>CLAUDE.md</code> file — Claude reads this on startup and will automatically connect to the Jira instance for all team members",
+      "Create a shared <code>~/.claude.json</code> template with the Jira configuration and distribute it to the team via internal wiki — each developer copies it to their home directory on setup",
       "Move the Jira MCP configuration to the project's <code>.mcp.json</code> and commit it — it becomes available to all team members automatically",
-      "Each developer manually adds the same Jira config to their own <code>~/.claude.json</code>"
+      "Have each developer manually add the identical Jira MCP server configuration block to their own <code>~/.claude.json</code> — this keeps credentials per-user while providing uniform access"
     ],
     "answer": 2,
     "pattern": "Project-Level vs User-Level MCP Config",
@@ -551,9 +551,9 @@
     "text": "A tool returns <code>{\"isError\": true, \"errorCategory\": \"validation\", \"isRetryable\": false, \"message\": \"Customer ID format invalid: must be 8 digits, received CUST-123\"}</code>. The agent retries the same call 3 times before escalating. What is wrong with this behavior?",
     "options": [
       "The agent should escalate immediately — validation errors with <code>isRetryable: false</code> indicate the input is wrong, and retrying without fixing the input will always fail",
-      "Validation errors should be silently suppressed; proceed with a null customer ID",
-      "The agent should retry validation errors — the model may self-correct the format on subsequent attempts",
-      "The <code>isRetryable</code> flag is advisory only — agents should always retry at least once"
+      "The tool should not return structured error metadata at all — validation failures should be returned as plain-text messages so the agent can interpret the error naturally and decide on next steps",
+      "The agent's retry behavior is correct — validation errors are often transient, and the model may self-correct the customer ID format on subsequent attempts without explicit input changes",
+      "The <code>isRetryable</code> flag is advisory metadata only and should not control agent behavior — best practice is to always retry at least once regardless of the flag value before escalating"
     ],
     "answer": 0,
     "pattern": "isRetryable — Validation Error Handling",
@@ -571,10 +571,10 @@
     "domain": "Claude Code Configuration & Workflows",
     "text": "A team's root <code>CLAUDE.md</code> has grown to 800 lines covering coding standards, testing, deployment, and security. New team members find it overwhelming. The team wants to split it into focused files. What is the correct approach?",
     "options": [
-      "Split into separate files and reference them from the project README",
+      "Split the content into separate Markdown files and reference them from the project's <code>README.md</code> — Claude reads the README automatically and follows links to each standards document",
       "Use <code>@./standards/testing.md</code>, <code>@./standards/security.md</code> in the root <code>CLAUDE.md</code> — Claude loads all imported content as part of the project context",
-      "Move all content to directory-level <code>CLAUDE.md</code> files placed in each relevant subdirectory",
-      "Create <code>CLAUDE-testing.md</code>, <code>CLAUDE-security.md</code> etc. and instruct developers to read them manually"
+      "Move all 800 lines into directory-level <code>CLAUDE.md</code> files placed in each relevant subdirectory (e.g., <code>tests/CLAUDE.md</code>, <code>deploy/CLAUDE.md</code>) — Claude only loads the file relevant to the current working directory",
+      "Create <code>CLAUDE-testing.md</code>, <code>CLAUDE-security.md</code>, and <code>CLAUDE-deploy.md</code> in the project root — Claude automatically discovers and loads any file matching the <code>CLAUDE-*.md</code> naming convention"
     ],
     "answer": 1,
     "pattern": "@path Modular CLAUDE.md Import",
@@ -592,9 +592,9 @@
     "domain": "Claude Code Configuration & Workflows",
     "text": "A senior engineer has all team conventions in <code>~/.claude/CLAUDE.md</code>. A new team member's Claude Code sessions ignore all conventions. What is the root cause?",
     "options": [
-      "User-level <code>CLAUDE.md</code> requires a team license to activate sharing",
-      "The new member needs to reinstall Claude Code to sync team settings",
-      "The new member needs to manually copy <code>~/.claude/CLAUDE.md</code> from the senior engineer's machine",
+      "The <code>~/.claude/CLAUDE.md</code> file requires an explicit <code>scope: team</code> frontmatter property to enable sharing — without it, conventions default to personal-only mode",
+      "Claude Code only loads <code>~/.claude/CLAUDE.md</code> when the user has authenticated with the same organization — the new member likely needs to log in with the team's shared Anthropic account",
+      "The new member needs to run <code>claude config sync</code> to pull the senior engineer's <code>~/.claude/CLAUDE.md</code> from the team's shared settings store before conventions take effect",
       "Team conventions in <code>~/.claude/CLAUDE.md</code> are personal — they exist only on the senior engineer's machine. Project conventions must live in the repository's <code>CLAUDE.md</code> to be shared via version control"
     ],
     "answer": 3,
@@ -613,10 +613,10 @@
     "domain": "Claude Code Configuration & Workflows",
     "text": "A <code>/audit-dependencies</code> skill is designed to only read and analyze code — it should never modify files. The team wants this enforced even if the skill's prompt is compromised. What is the correct configuration?",
     "options": [
-      "Use <code>context: fork</code> so the skill runs in isolation and any changes don't affect the main session",
-      "Remove <code>Write</code> from Claude Code's global allowed tools while the audit is running",
+      "Set <code>context: fork</code> in the skill's SKILL.md frontmatter — this runs the skill in an isolated sandbox where any file modifications are discarded after execution completes",
+      "Remove <code>Write</code> and <code>Edit</code> from the global <code>allowed-tools</code> in <code>.claude/settings.json</code> — this disables file modification for all skills and commands project-wide while the audit runs",
       "Set <code>allowed-tools: [\"Read\", \"Grep\", \"Glob\"]</code> in the skill's SKILL.md frontmatter — tool restrictions are enforced at the system level regardless of prompt content",
-      "Include \"Do not modify any files\" prominently in the skill's prompt"
+      "Add <code>\"Do not modify any files under any circumstances\"</code> as the first line of the skill's prompt — Claude Code treats the first line of SKILL.md as a system-level constraint that cannot be overridden"
     ],
     "answer": 2,
     "pattern": "Skill allowed-tools Security Enforcement",
@@ -634,10 +634,10 @@
     "domain": "Claude Code Configuration & Workflows",
     "text": "A CI/CD pipeline runs Claude to review PRs and posts results as GitHub comments. The current implementation parses Claude's free-text output with regex, causing 12% of comments to be malformed. What is the correct fix?",
     "options": [
-      "Wrap the Claude output in a try/catch and silently skip malformed responses",
+      "Wrap each Claude call in a try/catch block and retry with <code>--output-format json</code> on failure — retries with the format flag will eventually produce parseable output without needing a schema",
       "Use <code>claude -p \"Review this PR\" --output-format json --json-schema '{...}'</code> — this guarantees schema-validated structured output that can be safely parsed without regex",
-      "Use the Batch API to process PR reviews, which always returns structured JSON",
-      "Ask Claude to \"format your review as JSON with fields: severity, file, line, message\""
+      "Switch to the Batch API with <code>response_format: {\"type\": \"json_object\"}</code> — the Batch API enforces structured JSON responses automatically and eliminates the need for regex parsing",
+      "Add explicit instructions in the prompt like <code>\"Return your review as valid JSON with fields: severity, file, line, message\"</code> — prompt-level formatting instructions produce reliable JSON in 99% of cases"
     ],
     "answer": 1,
     "pattern": "CI/CD Structured JSON Output",
@@ -656,9 +656,9 @@
     "text": "A team creates a <code>/generate-api-docs</code> slash command. After committing it to the repository, some team members can invoke it but others cannot. All have Claude Code installed. What is the issue?",
     "options": [
       "The command was placed in <code>~/.claude/commands/</code> instead of <code>.claude/commands/</code> — user-level commands are only visible to their creator",
-      "The command filename must match a specific naming convention to be recognized by Claude Code",
-      "Slash commands cannot be committed to version control for security reasons",
-      "Slash commands require a paid Claude Code subscription to share across teams"
+      "The command file must use a <code>.md</code> extension with YAML frontmatter including <code>scope: project</code> — without this frontmatter property, commands default to creator-only visibility",
+      "Slash commands committed to version control require each team member to run <code>claude commands refresh</code> after pulling — Claude Code does not auto-detect new commands from git changes",
+      "Shared slash commands require approval in <code>.claude/settings.json</code> under <code>allowed-commands</code> — unapproved commands are hidden from other team members for security reasons"
     ],
     "answer": 0,
     "pattern": "Project Commands vs User Commands",
@@ -677,9 +677,9 @@
     "text": "A team has TypeScript conventions that apply to all <code>*.ts</code> files across 15 subdirectories. They want Claude to enforce these whenever it edits any <code>.ts</code> file. What is the most maintainable approach?",
     "options": [
       "Create <code>.claude/rules/typescript.md</code> with <code>paths: [\"**/*.ts\"]</code> in the frontmatter — rules load automatically when any <code>.ts</code> file is edited, regardless of subdirectory",
-      "Add the TypeScript rules to the root <code>CLAUDE.md</code> and rely on Claude to apply them to TypeScript files",
-      "Add a <code>CLAUDE.md</code> file to each of the 15 subdirectories repeating the same TypeScript rules",
-      "Add the TypeScript rules to <code>~/.claude/CLAUDE.md</code> so they apply across all projects"
+      "Add all TypeScript conventions to the root <code>CLAUDE.md</code> file — Claude reads this on every interaction and will apply the rules whenever it detects it is editing a <code>.ts</code> file based on context",
+      "Place a <code>CLAUDE.md</code> file containing the TypeScript conventions in each of the 15 subdirectories — Claude loads the nearest <code>CLAUDE.md</code> relative to the file being edited",
+      "Add the TypeScript rules to <code>~/.claude/CLAUDE.md</code> with a <code>paths: [\"**/*.ts\"]</code> filter — user-level rules with path filters are applied across all projects matching the glob pattern"
     ],
     "answer": 0,
     "pattern": "Path-Scoped Rules vs Directory CLAUDE.md",
@@ -698,9 +698,9 @@
     "text": "An engineer asks Claude Code to refactor a 50-file authentication system. Claude starts immediately modifying files, makes 15 changes, and then discovers the auth middleware is shared by 8 other services. Rollback takes 2 hours. What workflow would have prevented this?",
     "options": [
       "Enable plan mode first — Claude investigates and produces a plan for approval. Only execute after the full scope is understood and the plan is approved.",
-      "Limit Claude to changing one file at a time, reviewing each change before proceeding",
-      "Use a single pre-edit prompt: \"Summarize your refactoring plan before making any changes\"",
-      "Ask Claude to create a backup branch before starting any refactoring"
+      "Set <code>allowed-tools</code> in <code>.claude/settings.json</code> to exclude <code>Write</code> and <code>Edit</code> — this prevents Claude from modifying any files until the engineer explicitly re-enables write permissions",
+      "Add a system prompt instruction like <code>\"Before making any changes, summarize your refactoring plan\"</code> — Claude will then describe its approach in the chat before writing any files",
+      "Create a dedicated git branch and instruct Claude to commit after each file change — this provides atomic rollback points for each modification if issues are discovered later"
     ],
     "answer": 0,
     "pattern": "Plan Mode for Large Scope Changes",
@@ -718,9 +718,9 @@
     "domain": "Claude Code Configuration & Workflows",
     "text": "A CLAUDE.md hierarchy is designed as: root → <code>@standards/main.md</code> → <code>@details.md</code> → <code>@edge-cases.md</code> → <code>@footnotes.md</code> → <code>@archive.md</code>. Will all 6 levels of content load?",
     "options": [
-      "Yes — Claude follows all <code>@path</code> imports regardless of nesting depth",
-      "No — circular import detection will abort loading after 3 levels",
-      "Yes — but content beyond level 3 will have reduced priority in Claude's attention",
+      "Yes — Claude follows all <code>@path</code> imports recursively with no depth limit, so all 6 levels including <code>@archive.md</code> will be fully loaded and available",
+      "No — Claude's circular reference detection triggers at level 4, so <code>@edge-cases.md</code>, <code>@footnotes.md</code>, and <code>@archive.md</code> will all fail to load",
+      "Yes — all 6 levels will load, but content beyond level 3 is deprioritized in Claude's context window and may be ignored during response generation",
       "No — the maximum supported import nesting depth is 5 levels; <code>@archive.md</code> at level 6 will not be loaded"
     ],
     "answer": 3,
@@ -740,9 +740,9 @@
     "text": "A developer approves Claude's implementation plan, Claude implements it, and then the developer reviews the git diff — finding 3 unexpected files were modified beyond the plan's scope. What workflow step was missed?",
     "options": [
       "After implementation, verify that actual changes match the approved plan before committing — review the diff, run tests, and confirm scope didn't expand",
-      "The developer should have used a <code>--dry-run</code> flag before approving the plan",
-      "The plan approval step should lock which files can be modified via filesystem ACLs",
-      "Claude should automatically revert any changes not explicitly listed in the plan"
+      "The developer should have passed <code>--dry-run</code> when approving the plan — this flag simulates execution and shows which files would be modified without actually writing changes",
+      "The developer should have set <code>allowed-tools: [\"Read\", \"Grep\"]</code> during the planning phase and only added <code>Write</code> after verifying the plan — this locks file access to read-only until explicitly changed",
+      "Claude should have been configured with <code>strict-plan: true</code> in <code>.claude/settings.json</code> — this setting automatically reverts any file changes not explicitly listed in the approved plan"
     ],
     "answer": 0,
     "pattern": "Plan-Approve-Implement-Verify Cycle",
@@ -760,10 +760,10 @@
     "domain": "Claude Code Configuration & Workflows",
     "text": "An engineer spends 3 hours investigating a memory leak across 40 files with Claude Code. She closes her laptop for the night. How can she continue with full investigation context the next morning?",
     "options": [
-      "Claude Code automatically restores the last session on next startup",
+      "Claude Code automatically persists all session state to <code>~/.claude/sessions/</code> — reopening Claude Code the next morning will restore the last active session with full context automatically",
       "She saved the session with a name (e.g., <code>--save memory-leak</code>) and resumes with <code>--resume memory-leak</code> — the full conversation and findings are restored",
-      "Use <code>claude --continue</code> which always loads the most recent session automatically",
-      "She should copy the conversation transcript and paste it as context for the new session"
+      "She can use <code>claude --continue</code> which always resumes the most recent session — Claude Code keeps the last session in memory and restores all conversation history and file context on launch",
+      "She should export the session transcript with <code>claude --export</code> before closing, then import it the next morning with <code>claude --import</code> — this preserves the full investigation context as a reloadable file"
     ],
     "answer": 1,
     "pattern": "--resume Named Session",
@@ -781,9 +781,9 @@
     "domain": "Claude Code Configuration & Workflows",
     "text": "A <code>/analyze-module</code> skill requires a module path argument. When invoked without arguments, it silently fails with no user feedback. What SKILL.md frontmatter property improves the UX?",
     "options": [
-      "<code>input-schema: {\"type\": \"string\", \"description\": \"Module path\"}</code>",
-      "<code>required-args: [\"module_path\"]</code>",
-      "<code>prompt: \"Please provide a module path before running\"</code>",
+      "Add <code>input-schema: {\"type\": \"object\", \"required\": [\"path\"], \"properties\": {\"path\": {\"type\": \"string\"}}}</code> in the SKILL.md frontmatter — this validates arguments against a JSON Schema before execution",
+      "Add <code>required-args: [\"module_path\"]</code> in the SKILL.md frontmatter — this tells Claude Code to throw a validation error and block execution when mandatory arguments are missing",
+      "Add <code>default-argument: \"src/\"</code> in the SKILL.md frontmatter — this provides a fallback value when no argument is given, ensuring the skill always has a valid module path to analyze",
       "<code>argument-hint: \"Path to the module (e.g., src/payments/processor.ts)\"</code> — when invoked without arguments, Claude Code prompts the user with this hint"
     ],
     "answer": 3,
@@ -803,9 +803,9 @@
     "text": "A CI pipeline runs a full Claude code review on every commit. Developers complain that the same pre-existing issues appear in every review, burying new findings. What is the correct fix?",
     "options": [
       "Include the previous review results in the Claude prompt and instruct it: \"Report only issues that are new or not yet resolved since the last review\"",
-      "Reset the review entirely on every third commit to get a fresh perspective",
-      "Run the review only on changed files, not the full codebase",
-      "Filter out low-severity issues automatically from all re-reviews"
+      "Configure the CI pipeline to reset Claude's context completely on every third commit so it approaches the codebase with no memory of prior reviews, giving a fresh perspective each cycle",
+      "Scope the review to only the files changed in the current commit's diff, so Claude never sees unchanged files and therefore cannot report pre-existing issues in them",
+      "Add a post-processing filter that automatically strips any issue below HIGH severity from repeated reviews, reducing noise by removing low-priority findings from the output"
     ],
     "answer": 0,
     "pattern": "CI/CD Incremental Re-Review",
@@ -823,10 +823,10 @@
     "domain": "Prompt Engineering & Structured Output",
     "text": "A customer support agent has <code>get_customer(email)</code> and <code>lookup_order(order_id)</code>. When a customer says \"I have a problem with my recent order,\" the agent calls <code>lookup_order</code> first 40% of the time — but it should always call <code>get_customer</code> first to establish identity. What is the most effective fix?",
     "options": [
-      "Add a system prompt: \"Always call get_customer before lookup_order\"",
-      "Remove <code>lookup_order</code> from the initial toolset and add it only after <code>get_customer</code> returns",
+      "Add a one-line system prompt instruction: \"Always call get_customer before lookup_order\" — Claude will follow explicit ordering rules in the system prompt consistently",
+      "Remove lookup_order from the initial tool set and only inject it into the available tools after get_customer has returned a valid customer_id, enforcing the sequence architecturally",
       "Add few-shot examples: request \"I have a problem with my order\" → first call <code>get_customer</code>, then use the returned <code>customer_id</code> to call <code>lookup_order</code>, with rationale for why this sequence is correct",
-      "Rename <code>lookup_order</code> to <code>lookup_order_by_id</code> to emphasize the required parameter"
+      "Rename lookup_order to lookup_order_requires_customer_id to make the parameter dependency obvious in the tool name, so the model infers it needs the customer record first"
     ],
     "answer": 2,
     "pattern": "Few-Shot Tool Selection Disambiguation",
@@ -844,10 +844,10 @@
     "domain": "Prompt Engineering & Structured Output",
     "text": "A contract extraction schema has <code>\"attendee_count\": {\"type\": \"integer\"}</code> as a required field. For contracts that don't mention attendees, the model generates plausible values: 50, 100, 250. What change eliminates hallucinated values?",
     "options": [
-      "Set <code>temperature: 0</code> — deterministic generation prevents hallucinated values",
+      "Set temperature to 0 for all extraction calls — deterministic decoding ensures the model will not generate any value that isn't explicitly stated in the source document",
       "Mark the field as <code>\"type\": [\"integer\", \"null\"]</code> and add explicit instruction: \"If attendee_count is not mentioned in the document, return null\"",
-      "Remove <code>attendee_count</code> from the schema for contracts that don't mention it",
-      "Change the type to <code>\"string\"</code> so the model can write \"unknown\" as text"
+      "Remove attendee_count from the required array and from the schema entirely for contracts where the value isn't expected, then add it back only for event-related contract types",
+      "Change the field type from integer to string so the model can return descriptive values like \"unknown\" or \"not specified\" when attendee count is absent from the document"
     ],
     "answer": 1,
     "pattern": "Nullable Fields — Prevent Hallucination",
@@ -865,9 +865,9 @@
     "domain": "Prompt Engineering & Structured Output",
     "text": "An insurance pipeline uses <code>claim_type: {\"enum\": [\"auto\", \"home\", \"health\", \"life\"]}</code>. New claim types — drone, rideshare, aquatic — keep breaking validation. What schema change makes this production-resilient?",
     "options": [
-      "Replace the enum with <code>\"type\": \"string\"</code> and validate patterns in post-processing",
-      "Add every new claim type to the enum as it appears — expand the list reactively",
-      "Replace the enum with a free-text field and use a separate classifier to normalize values",
+      "Replace the enum entirely with \"type\": \"string\" and add a regex pattern constraint, then validate the extracted claim types against a known list in a post-processing step",
+      "Keep the existing enum and add each new claim type (drone, rideshare, aquatic) to the list as it appears in production — update the schema reactively whenever validation fails",
+      "Replace the enum with a free-text string field and deploy a separate classification model downstream that normalizes the extracted claim type into your canonical category list",
       "Change to <code>{\"enum\": [\"auto\", \"home\", \"health\", \"life\", \"other\"]}</code> and add <code>\"claim_type_detail\": {\"type\": [\"string\", \"null\"]}</code> — \"other\" handles novel types, the detail field captures specifics"
     ],
     "answer": 3,
@@ -907,9 +907,9 @@
     "domain": "Prompt Engineering & Structured Output",
     "text": "An invoice extraction pipeline reports 6% discrepancy errors where extracted line items don't sum to the stated total. The team wants to detect these automatically within the extraction step. What schema change enables this?",
     "options": [
-      "Add a separate validation step after extraction that sums line items",
-      "Instruct the model: \"Verify your arithmetic before submitting the extraction\"",
-      "Use a PostToolUse hook to run arithmetic validation on every extraction result",
+      "Add a separate post-extraction validation step that independently sums the extracted line items and compares against the total — this runs outside the model as a downstream check",
+      "Add an instruction in the extraction prompt telling the model: \"After extracting all line items, verify that they sum to the stated total and correct any arithmetic errors before returning\"",
+      "Implement a PostToolUse hook that intercepts every extraction result, runs arithmetic validation on the line item sum versus the total, and rejects mismatched results automatically",
       "Extract both <code>stated_total</code> (as written in the document) and <code>calculated_total</code> (model sums the line items) — when they differ, flag for human review"
     ],
     "answer": 3,
@@ -928,10 +928,10 @@
     "domain": "Prompt Engineering & Structured Output",
     "text": "A legal pipeline uses Pydantic with <code>jurisdiction: str</code>. The model returns <code>\"NY, NY\"</code> instead of the required two-letter state code <code>\"NY\"</code>. Pydantic validation passes. What is missing?",
     "options": [
-      "Update the prompt: \"Return only the two-letter state abbreviation (e.g., NY, CA)\"",
+      "Update the extraction prompt to say: \"Return only the two-letter state abbreviation such as NY or CA\" — clearer instructions will prevent the model from including extra text",
       "Pydantic validates structure but not semantics — add a custom Pydantic validator that checks <code>jurisdiction</code> matches the <code>^[A-Z]{2}$</code> pattern",
-      "Add <code>max_length=2</code> to the field definition to enforce the two-character limit",
-      "Change the type to <code>Enum</code> with all 50 state codes listed"
+      "Add max_length=2 to the Pydantic field definition so that any string longer than two characters is automatically rejected by the structural validation layer",
+      "Change the field type from str to a Python Enum that enumerates all 50 US state codes — the model must select from the enum values, preventing free-text entry entirely"
     ],
     "answer": 1,
     "pattern": "Pydantic Structural vs Semantic Validation",
@@ -949,10 +949,10 @@
     "domain": "Prompt Engineering & Structured Output",
     "text": "A recipe extraction pipeline normalizes ingredient quantities. Inputs vary: \"2 cups\", \"two cups\", \"~500ml\", \"a handful\". Output is inconsistent even with <code>temperature: 0</code>. What is the most reliable fix?",
     "options": [
-      "Instruct the model: \"Always convert measurements to metric units with numeric values\"",
+      "Add a system prompt instruction: \"Always convert all ingredient measurements to metric units with numeric values — never return text-based quantities like 'a handful'\"",
       "Add few-shot examples: <code>\"two cups\" → {\"amount\": 2, \"unit\": \"cup\"}</code>, <code>\"~500ml\" → {\"amount\": 500, \"unit\": \"ml\", \"approximate\": true}</code>, <code>\"a handful\" → {\"amount\": null, \"unit\": \"handful\", \"approximate\": true}</code>",
-      "Define an enum of all allowed unit strings and require selection from the list",
-      "Post-process the output with a rules-based unit conversion library"
+      "Define a strict enum of all allowed unit strings (cup, tbsp, ml, g, etc.) and require the model to select from the list, rejecting any output that uses a unit not in the enum",
+      "Keep the extraction prompt simple and pipe all outputs through a deterministic rules-based unit conversion library that normalizes text quantities into structured numeric values"
     ],
     "answer": 1,
     "pattern": "Format Normalization via Few-Shot Examples",
@@ -970,10 +970,10 @@
     "domain": "Prompt Engineering & Structured Output",
     "text": "A code generation agent reviews its own output for bugs and misses 35% of the bugs it introduces. An independent Claude instance without the generation context catches 78% of those same bugs. What explains the difference?",
     "options": [
-      "The second instance benefits from a longer context window with no prior messages consuming tokens",
+      "The independent instance has a completely empty context window with no prior messages consuming tokens, giving it more available capacity to perform deeper and more thorough analysis",
       "The generating instance retains its own reasoning context and is less likely to challenge decisions it just made — an independent instance evaluates the code without prior commitment",
-      "The second instance uses a different, more capable model version for review tasks",
-      "The generating instance is rate-limited after long generation sessions, degrading review quality"
+      "The independent review instance is automatically routed to a newer, more capable model checkpoint that Anthropic optimizes specifically for code review and bug detection tasks",
+      "The generating instance experiences degraded quality due to API rate limiting and token-per-minute throttling after long code generation sessions, reducing its ability to detect bugs"
     ],
     "answer": 1,
     "pattern": "Multi-Instance Review — Independent Context",
@@ -992,9 +992,9 @@
     "text": "A PR review prompt uses severity labels: CRITICAL, HIGH, MEDIUM, LOW. The same SQL injection vulnerability is labeled CRITICAL 60% of the time and HIGH 40% of the time across runs. What prompt change eliminates this inconsistency?",
     "options": [
       "Define each severity level with concrete examples: \"CRITICAL: Causes immediate data loss or security breach (e.g., unauthenticated SQL injection, plaintext password storage). HIGH: Exploitable without immediate breach (e.g., missing rate limiting, IDOR with authentication required).\"",
-      "Reduce to two severity levels (CRITICAL / NON-CRITICAL) to eliminate ambiguity",
-      "Add confidence scores alongside severity labels and flag discrepancies for human review",
-      "Set <code>temperature: 0</code> to make severity assignment deterministic"
+      "Collapse the four severity levels into just two categories — CRITICAL and NON-CRITICAL — so there are fewer boundaries for the model to distinguish between, eliminating ambiguous edge cases",
+      "Keep all four severity levels but add a numeric confidence score (0–100) alongside each label, then flag any finding where confidence falls below 80% for human reviewer adjudication",
+      "Set temperature to 0 for all review runs to ensure deterministic token selection — this forces the model to produce identical severity labels for the same input every time"
     ],
     "answer": 0,
     "pattern": "Explicit Severity Criteria with Examples",
@@ -1034,9 +1034,9 @@
     "text": "Pydantic validation fails with: <code>\"date_of_birth must be ISO 8601 (YYYY-MM-DD), received: '01/15/1985'\"</code>. The system retries with a blank prompt. Retry fails 80% of the time. What change improves success rate?",
     "options": [
       "Include the original document, the failed extraction, and the specific error in the retry: \"Validation failed: date_of_birth must be ISO 8601 (YYYY-MM-DD), received '01/15/1985'. Re-extract and correct this field.\"",
-      "Use <code>temperature: 0.2</code> on retries to add variation that may produce the correct format",
-      "Increase <code>max_retries</code> to 10 — the correct format will eventually appear",
-      "Add more few-shot examples to the base prompt covering all date input formats"
+      "Set temperature to 0.2 on retry attempts to introduce slight variation in the model's output, increasing the probability that one of the retries will happen to produce the correct ISO format",
+      "Increase max_retries from 1 to 10 so the system makes more attempts — with enough retries the model will statistically produce the correct ISO 8601 date format at least once",
+      "Add comprehensive few-shot examples to the base extraction prompt covering every common date format (MM/DD/YYYY, DD-MM-YYYY, Month DD YYYY) so the model learns all conversions upfront"
     ],
     "answer": 0,
     "pattern": "Retry with Error Feedback Loop",
@@ -1054,9 +1054,9 @@
     "domain": "Prompt Engineering & Structured Output",
     "text": "A structured extraction tool is defined with a JSON schema. With <code>tool_choice: {\"type\": \"auto\"}</code>, 6% of responses are free-text explanations instead of tool calls. The team needs 100% structured output. What change achieves this?",
     "options": [
-      "Add \"You must always call the extract_data tool\" to the system prompt",
-      "Use <code>stop_sequences</code> to intercept text responses before they complete",
-      "Set <code>temperature: 0</code> to make the model deterministically choose the tool",
+      "Add \"You must always call the extract_data tool\" to the system prompt — this instructs the model at the prompt level to never produce free-text, ensuring 100% structured output compliance",
+      "Use <code>stop_sequences: [\"\\n\"]</code> to intercept and terminate any free-text responses before they complete, effectively forcing the model to fall back to a tool call instead",
+      "Set <code>temperature: 0</code> to eliminate sampling randomness — this makes the model deterministically select the tool call path on every request, removing the 6% free-text variance",
       "Change to <code>tool_choice: {\"type\": \"any\"}</code> — forces the model to call some tool on every response, eliminating free-text output"
     ],
     "answer": 3,
@@ -1075,9 +1075,9 @@
     "domain": "Context Management & Reliability",
     "text": "A research synthesis agent summarizes findings from 15 sources. The final report contains \"AI music market valued at $3.2B\" without attribution. A fact-checker finds this conflicts with a newer source showing $5.1B. What structural change prevents lost provenance?",
     "options": [
-      "Run a separate citation-extraction pass after synthesis to retroactively add sources",
-      "Instruct the agent to cite sources inline using numbered footnotes",
-      "Store all source documents in a vector store for post-hoc lookup",
+      "Run a separate citation-extraction pass after synthesis that uses a retrieval tool to match each claim back to its original source URL, publication date, and exact quote — then inject these as footnotes into the final report",
+      "Instruct the synthesis agent to always cite sources inline using numbered footnotes like [1], [2] — the model will naturally track which source each claim came from and attribute them correctly in the output",
+      "Store all 15 source documents in a vector database and have the synthesis agent query it for each claim at report-generation time, retrieving the nearest matching chunk to verify provenance before including the claim",
       "Require all subagents to output <code>{\"claim\": \"...\", \"source_url\": \"...\", \"publication_date\": \"...\", \"confidence\": 0.9}</code> claim-source mappings; the synthesis agent preserves these in the final report"
     ],
     "answer": 3,
@@ -1096,10 +1096,10 @@
     "domain": "Context Management & Reliability",
     "text": "A long-running multi-agent pipeline fails after 2 hours. The team can tell the coordinator crashed but cannot determine which of 12 subagents completed successfully. They must restart from scratch. What state management pattern enables partial restart?",
     "options": [
-      "Log all API requests and responses to a central monitoring service for post-mortem analysis",
-      "Set a timeout on each subagent and mark it complete if no error was received within the window",
+      "Log all API requests, responses, and intermediate outputs to a centralized monitoring service — on failure, engineers can analyze the logs to manually reconstruct which subagents completed and resume from there",
+      "Set a 15-minute timeout on each subagent call and automatically mark it as completed if no error was raised within the window — the coordinator can then skip agents that were marked complete on restart",
       "Each subagent writes <code>{\"status\": \"completed\", \"key_findings\": [...], \"coverage\": [...]}</code> to <code>agent-state/{agent_name}.json</code> on success; on restart, the coordinator checks these files and skips completed agents",
-      "Use a database transaction that commits all 12 subagent results atomically at the end"
+      "Use a database transaction that holds all 12 subagent results in a pending state, committing them atomically only when every subagent finishes — on failure, the transaction rolls back and the full pipeline reruns cleanly"
     ],
     "answer": 2,
     "pattern": "Structured State Files for Partial Restart",
@@ -1117,9 +1117,9 @@
     "domain": "Context Management & Reliability",
     "text": "A 60-turn customer support session approaches context limits. During compression, specific values — order number, exact refund amount, resolution deadline — are lost, causing downstream errors. What pattern preserves these through compression?",
     "options": [
-      "Append key facts to the system prompt before each API call",
-      "Reduce the compression ratio to preserve more conversation detail",
-      "Save key facts to a database and retrieve them via tool call when needed",
+      "Append all extracted key facts (order number, refund amount, deadline) to the system prompt before each API call — this keeps them visible to the model even as conversation history is compressed below",
+      "Reduce the compression ratio from aggressive to conservative (e.g., keep 80% of tokens instead of 40%) — this preserves more conversational detail including the specific values that were previously lost",
+      "Save critical case facts to an external database via tool call whenever they appear, then have the agent retrieve them on demand via a <code>get_case_facts</code> tool — this offloads storage to a persistent layer outside the context window",
       "Maintain a <code>=== CASE FACTS ===</code> block at the top of context that is updated in-place but never summarized — only the conversation history below it is compressed"
     ],
     "answer": 3,
@@ -1138,10 +1138,10 @@
     "domain": "Context Management & Reliability",
     "text": "A customer support system escalates based on: (1) sentiment score &lt; 0.3, (2) model self-confidence &lt; 5/10, (3) explicit \"I want to speak to a manager.\" Post-launch: 68% of escalations are false positives driven by signals 1 and 2. What is the correct redesign?",
     "options": [
-      "Calibrate the sentiment threshold to 0.15 and confidence threshold to 3/10 to reduce false positives",
+      "Calibrate the sentiment threshold down to 0.15 and the self-confidence threshold down to 3/10 — tighter thresholds will filter out the marginal cases that are currently producing false positive escalations",
       "Keep explicit requests (signal 3) and clear policy gaps as primary triggers; remove sentiment and self-confidence signals, which are unreliable proxies",
-      "Remove all automated signals — escalate only on explicit customer request",
-      "Add a confirmation step: ask the customer \"Would you like to speak with a human?\" before every escalation"
+      "Remove all three automated signals entirely and escalate only when the customer explicitly says they want a human — this eliminates false positives completely by relying solely on direct customer intent",
+      "Add a confirmation step before every escalation: ask the customer \"Would you like to speak with a human agent?\" and only escalate if they confirm — this validates each automated signal with direct customer input"
     ],
     "answer": 1,
     "pattern": "Escalation Trigger Reliability",
@@ -1159,10 +1159,10 @@
     "domain": "Context Management & Reliability",
     "text": "A support agent escalates by passing the full 52-turn conversation transcript to the human agent. Human agents spend 10–15 minutes reading context before helping. What is the correct escalation handoff design?",
     "options": [
-      "Pass only the customer's most recent message so the human can assess the situation directly",
+      "Pass only the customer's most recent message along with a one-line topic label — the human agent can assess the current situation directly and ask follow-up questions if they need more context",
       "Pass a structured JSON payload with only the decision-relevant fields: <code>customer_id</code>, <code>issue_summary</code>, <code>actions_taken</code>, <code>recommended_action</code>, <code>escalation_reason</code>",
-      "Summarize the conversation to the 10 most recent turns",
-      "Create a bullet-point summary of the conversation for the human agent"
+      "Trim the transcript to the 10 most recent turns and pass those as the handoff context — this reduces reading time while preserving enough conversational flow for the human agent to understand the issue",
+      "Generate a free-text bullet-point summary of the full conversation and pass it to the human agent — this condenses the 52 turns into a scannable narrative while retaining the key discussion points"
     ],
     "answer": 1,
     "pattern": "Structured Escalation Handoff",
@@ -1180,10 +1180,10 @@
     "domain": "Context Management & Reliability",
     "text": "A regulatory document analysis pipeline consistently misses critical dates and percentages from sections 3–5 of 10-section documents, while sections 1–2 and 9–10 are extracted accurately. No changes were made to the prompt. What is the cause and fix?",
     "options": [
-      "Sections 3–5 contain denser legal language that requires more attention capacity",
+      "Sections 3–5 contain denser regulatory language with more complex table structures — the model needs a specialized extraction prompt with few-shot examples targeting those section formats to improve accuracy",
       "This is the lost-in-the-middle effect — models reliably process content at the start and end of long inputs but degrade in the middle. Fix: process sections in independent passes, or restructure input to place critical content at the boundaries",
-      "Use <code>temperature: 0</code> to force uniform attention across all sections",
-      "The model's attention degrades specifically after processing more than 5 sections — split documents at section 5"
+      "Set <code>temperature: 0</code> to eliminate sampling variance — this forces the model to apply uniform attention weight across all sections, preventing the accuracy drop observed in the middle of the document",
+      "The model's transformer attention mechanism has a hard degradation cliff after processing approximately 5 sequential sections — split every document at section 5 into two separate API calls to stay under this threshold"
     ],
     "answer": 1,
     "pattern": "Lost-in-the-Middle Mitigation",
@@ -1202,9 +1202,9 @@
     "text": "A research agent finds two conflicting values: Source A (March 2024): \"12% of streaming music is AI-generated.\" Source B (September 2024): \"8%.\" How should the agent represent this in the final report?",
     "options": [
       "Preserve both values with sources and dates, flag the conflict, and note a plausible explanation: <code>{\"conflict_detected\": true, \"values\": [{\"value\": \"12%\", \"source\": \"A\", \"date\": \"2024-03\"}, {\"value\": \"8%\", \"source\": \"B\", \"date\": \"2024-09\"}], \"possible_explanation\": \"Different methodology or market change over 6 months\"}</code>",
-      "Average the two figures and report \"approximately 10%\"",
-      "Use the more recent figure (8%) — it supersedes the older one",
-      "Flag the conflict and refuse to report any figure until a human resolves it"
+      "Average the two values and report \"approximately 10% of streaming music is AI-generated\" — this gives the reader a reasonable middle-ground estimate while acknowledging imprecision with the qualifier",
+      "Use the more recent figure (8% from September 2024) since it supersedes the older March 2024 data — the agent should always prefer the latest available source when values conflict to ensure accuracy",
+      "Flag the conflict in the report and withhold both figures entirely until a human reviewer investigates and determines which source is authoritative — the agent should not make editorial judgments about conflicting data"
     ],
     "answer": 0,
     "pattern": "Multi-Document Conflict Resolution",
@@ -1222,10 +1222,10 @@
     "domain": "Context Management & Reliability",
     "text": "A customer support agent is resumed 8 hours after a session was paused. The history contains a <code>lookup_order</code> tool result: \"Status: In Transit, ETA: 2 hours\" — from 8 hours ago. The agent tells the customer their order arrives \"in about 2 hours.\" What session management fix prevents this?",
     "options": [
-      "Add a system prompt instruction: \"Treat all tool results as potentially stale if the session was paused\"",
-      "Set a TTL on all tool results and automatically invalidate them after 1 hour",
+      "Add a system prompt instruction: \"All tool results from previous sessions may be stale — always caveat time-sensitive data with 'as of the last check'\" — this ensures the model qualifies any cached data rather than stating it as current fact",
+      "Attach a TTL metadata field to every <code>tool_result</code> message and have the runtime automatically replace expired results with a placeholder like <code>{\"stale\": true}</code> — the model will then know to re-fetch before answering",
       "On session resume, programmatically strip all previous <code>tool_result</code> messages from history while keeping human/assistant turns — forcing the agent to re-fetch current data before responding",
-      "Re-execute all tool calls from the previous session at resume time to refresh cached data"
+      "On session resume, automatically re-execute every tool call found in the previous session's history to refresh all cached data — this ensures the agent always has current results without needing to detect staleness"
     ],
     "answer": 2,
     "pattern": "Programmatic tool_result Strip on Resume",
@@ -1244,9 +1244,9 @@
     "text": "A main agent is asked to understand the authentication architecture of a 600-file codebase. If it loads files directly, it will exhaust its context window before producing useful output. What is the correct pattern?",
     "options": [
       "Delegate the exploration to an Explore subagent via the <code>Task</code> tool — the subagent loads all needed files in its own isolated context and returns a concise structured summary. The main agent gets the findings without consuming its context window.",
-      "Ask the agent to load only the 10 most relevant files based on filename guesses",
-      "Use <code>--context-limit</code> flag to prevent the agent from reading more than 20 files",
-      "Start a fresh session for the exploration and manually copy the findings back"
+      "Have the agent use <code>grep</code> and filename heuristics to identify the 10–15 most likely authentication-related files, then load only those — this keeps context usage low while targeting the relevant code paths",
+      "Use the <code>--context-limit 50000</code> flag to cap how many tokens the agent can read into context — this prevents window exhaustion by forcing the agent to be selective about which files it loads",
+      "Start an entirely new Claude session dedicated to the codebase exploration, then manually copy the session's conclusions back into the original conversation as a user message for the main agent to work with"
     ],
     "answer": 0,
     "pattern": "Subagent Delegation for Context Protection",
@@ -1403,9 +1403,9 @@
       }
     ],
     "options": [
-      "The JSON-RPC 2.0 protocol does not support transmitting conversation arrays between endpoints",
-      "Full conversation history would exceed the server's token limit, causing processing failures",
-      "Servers run on separate hardware and network latency makes full history transfer impractical",
+      "The JSON-RPC 2.0 transport layer used by MCP only supports stateless request-response pairs, so there is no mechanism to pass conversation arrays between server endpoints",
+      "Full conversation history would consume the server's available token budget for processing, causing failures when the combined history exceeds the server's internal context limit",
+      "MCP servers are designed to be lightweight and stateless — maintaining conversation history would require persistent storage on each server, breaking the protocol's scalability model",
       "Server isolation is a core design principle — servers receive only necessary contextual information, and the Host controls cross-server interactions to enforce security boundaries"
     ],
     "answer": 3
@@ -1446,9 +1446,9 @@
     ],
     "options": [
       "Treat them as untrusted unless the server is explicitly trusted — tool annotations and descriptions could be manipulated",
-      "Ignore all annotations and rely solely on the tool's function signature for security",
-      "Trust them implicitly since the MCP protocol validates all annotations during capability negotiation",
-      "Hash and verify them against a central MCP Registry checksum before use"
+      "Strip all annotations and descriptions entirely and rely only on the tool's function signature and parameter types to determine how to invoke it securely",
+      "Trust them after the initial capability negotiation handshake, since the MCP protocol validates and signs all tool annotations during the initialize exchange",
+      "Cache them on first connection and reject any subsequent changes — annotations are guaranteed immutable once the server has completed its initial registration"
     ],
     "answer": 0
   },
@@ -1508,10 +1508,10 @@
       }
     ],
     "options": [
-      "Compress tool descriptions to shorter strings and remove parameter documentation",
+      "Compress each server's tool descriptions to minimal one-line summaries and strip all parameter documentation to reduce per-server token usage below 1,000 tokens",
       "Have the agent write code that calls MCP tools programmatically in a sandbox, loading tool schemas on-demand within the execution environment",
-      "Enable prompt caching so tool definitions are stored outside the context window entirely",
-      "Split the tool definitions across multiple turns so only 3 servers are loaded per turn"
+      "Enable prompt caching for tool definitions so they are stored in Anthropic's cache layer and no longer consume active context window tokens at all",
+      "Split the 15 servers into 5 groups of 3, loading each group's definitions in separate turns so the context window never holds more than 30,000 tokens of tool schemas at once"
     ],
     "answer": 1
   },
@@ -1550,10 +1550,10 @@
       }
     ],
     "options": [
-      "Server A can use the Sampling feature to query Server B's tools directly",
-      "The client connected to Server A can forward requests to Server B's client automatically",
+      "Server A can use MCP's Sampling capability to directly invoke Server B's tools within its own request handler, since Sampling enables server-to-server tool calls",
+      "The MCP client connected to Server A can detect cross-server dependencies and automatically forward the request to Server B's client through the transport layer",
       "The host process must mediate all cross-server interactions; servers cannot directly communicate with each other",
-      "Server A should subscribe to Server B's resources using a shared session token"
+      "Server A should subscribe to Server B's resources using a shared session token established during the capability negotiation phase of both servers' initialization"
     ],
     "answer": 2
   },
@@ -1571,10 +1571,10 @@
       }
     ],
     "options": [
-      "Prompt caching — storing intermediate results so they don't count against the context window",
-      "Tool result stripping — removing tool_result blocks from previous turns before the next API call",
+      "Prompt caching — storing the raw query results in Anthropic's server-side cache so they persist across turns without counting against the active context window",
+      "Tool result stripping — automatically removing tool_result content blocks from previous turns before sending the next API call to keep the context lean",
       "In-environment data filtering — processing and reducing data inside the execution sandbox before returning results to the model",
-      "Context compaction — having the model summarize its own conversation history"
+      "Context compaction — instructing the model to summarize its own conversation history into a condensed form that replaces the original messages in the context"
     ],
     "answer": 2
   },
@@ -1613,10 +1613,10 @@
       }
     ],
     "options": [
-      "Insert a system prompt instructing the model to ignore previous tool results",
-      "Use prompt caching to make the intermediate results free of charge",
+      "Insert a system-level instruction telling the model to disregard all previous tool_result blocks and focus only on the most recent tool output for its final response",
+      "Enable prompt caching for the tool result blocks so the intermediate results are served from cache and do not count toward the active context window token budget",
       "Switch to a code-execution pattern where the agent writes a script that chains all 8 tool calls, returning only the final result to the context",
-      "Increase the model's max_tokens parameter to accommodate the growing context"
+      "Increase the model's max_tokens parameter to a higher value so the full 120K of intermediate context can be retained without hitting output or input limits"
     ],
     "answer": 2
   },
@@ -1634,9 +1634,9 @@
       }
     ],
     "options": [
-      "In the client, which selectively replays relevant turns to the server",
-      "Distributed across all connected servers so each can maintain full context",
-      "In a shared memory resource that all servers can subscribe to",
+      "In the client layer, which maintains a rolling buffer of conversation turns and selectively replays relevant portions to each server as needed",
+      "Distributed across all connected MCP servers so each one can maintain full conversational context and respond with maximum relevance to user queries",
+      "In a shared memory resource exposed via MCP's resource protocol that all connected servers can subscribe to and read from on demand",
       "With the host — servers receive only the necessary contextual information for their specific task"
     ],
     "answer": 3
@@ -1680,10 +1680,10 @@
       }
     ],
     "options": [
-      "Re-run all subagents from scratch to eliminate the inconsistency",
-      "Pass all results including the contradiction directly to the user and let them decide",
+      "Re-run all subagents from scratch with identical prompts to see if the contradiction reproduces — if it doesn't, use the new consistent results for synthesis",
+      "Pass all results including the contradictory one directly to the end user with a flag indicating disagreement, letting them arbitrate the conflict manually",
       "Have the coordinator invoke a dedicated verification subagent that re-examines the contradictory result with fresh context before synthesis",
-      "Automatically discard the outlier result and synthesize only the agreeing subagent outputs"
+      "Automatically discard the outlier result using a majority-vote heuristic and synthesize the final answer using only the outputs from the agreeing subagents"
     ],
     "answer": 2
   },
@@ -1727,9 +1727,9 @@
     ],
     "options": [
       "In the user-level <code>~/.claude/CLAUDE.md</code> file, which applies globally but can be overridden by project-level CLAUDE.md files",
-      "In the system prompt of each Claude Code session, configured through environment variables",
-      "In a centralized Git repository that each project imports via a submodule",
-      "In a project-level CLAUDE.md at the root of each repository, duplicated identically"
+      "In the system prompt of each Claude Code session, configured through CLAUDE_SYSTEM_PROMPT environment variables that team members set in their shell profiles",
+      "In a centralized shared Git repository that each project imports as a submodule, with a post-checkout hook that copies the standards into each repo's CLAUDE.md",
+      "In a project-level CLAUDE.md at the root of each individual repository, duplicated identically across all repos and kept in sync manually by the team"
     ],
     "answer": 0
   },
@@ -1751,9 +1751,9 @@
       }
     ],
     "options": [
-      "Set the temperature to 0 to eliminate all hallucination",
-      "Use tool_choice: any to force Claude to always call the extraction tool, which prevents hallucination",
-      "Add a minimum array length of 1 in the JSON schema so Claude always provides at least one item",
+      "Set the temperature to 0 to make the model fully deterministic — this eliminates the randomness that causes hallucinated action items when none are present in the transcript",
+      "Use tool_choice set to 'any' to force Claude to always invoke the structured extraction tool, which constrains outputs to the schema and prevents hallucinated content",
+      "Add a minItems constraint of 1 in the JSON schema's action_items array definition so Claude always returns at least one item rather than guessing whether items exist",
       "Add an explicit instruction: \"If no action items are present, return an empty array. Do not invent action items that are not explicitly stated in the transcript.\""
     ],
     "answer": 3
@@ -1776,10 +1776,10 @@
       }
     ],
     "options": [
-      "Start a new conversation from scratch, replaying the entire document and all prior tool results",
+      "Start a completely new conversation from scratch, replaying the full 180K token document and all prior tool results from the beginning to restore state",
       "Use context compaction to summarize completed work and prior tool results, then continue processing with the reduced context",
-      "Switch to a model with a larger context window mid-conversation",
-      "Increase max_tokens on the next request to give the model more room to work"
+      "Switch to a model variant with a larger context window mid-conversation, passing the existing message history and remaining instructions to the new model endpoint",
+      "Increase the max_tokens parameter on the next API request to expand the available output space, allowing the model to continue generating where it left off"
     ],
     "answer": 1
   },
@@ -1801,9 +1801,9 @@
       }
     ],
     "options": [
-      "Hardcode the token in the MCP server's source code for simplicity",
-      "Store the token in an MCP resource that the model reads and includes in tool call arguments",
-      "Include the token in the tool description so the model can pass it as a parameter with each call",
+      "Hardcode the OAuth token directly in the MCP server's configuration file and load it at startup, keeping it internal to the server process so the model never sees it",
+      "Store the token as a named MCP resource that the model can read on demand, then have the model include the token value in each tool call's input arguments automatically",
+      "Include the OAuth token in the tool's input schema description so the model learns to pass it as a required parameter with every tool invocation, letting the server forward it to the API",
       "Store the token in the host application's secure credential store and pass it to the MCP server via the authorized session context, never exposing it to the model"
     ],
     "answer": 3
@@ -1848,9 +1848,9 @@
     ],
     "options": [
       "Add an <code>\"other\"</code> value to the enum and include a sibling <code>category_detail</code> string field for the model to explain edge cases",
-      "Add a system prompt instruction saying \"if unsure, pick the closest category\" to force a choice",
-      "Set the category field as optional so the model can omit it when uncertain",
-      "Remove the enum constraint entirely and let the model output any string for category"
+      "Add a system prompt instruction telling the model \"if the input doesn't fit any category, select the closest match anyway\" to ensure the enum constraint is always satisfied cleanly",
+      "Mark the category field as optional in the JSON schema so the model can omit it entirely when the input is ambiguous, then handle null values in your application logic",
+      "Remove the enum constraint from the schema entirely and allow the model to output any free-text string for the category field, then normalize unexpected values in post-processing"
     ],
     "answer": 0
   },
